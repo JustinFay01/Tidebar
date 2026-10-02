@@ -42,10 +42,43 @@ Or open `Tidebar.xcodeproj` in Xcode and run the `Tidebar` scheme.
 1. Open Tidebar's menu in the menu bar and choose **Settings…**
 2. Enter your Dexcom username and password, choose your region (United States, Outside United States, or Japan), and click **Save & Connect**.
 
+## Troubleshooting
+
+When something is wrong, the menu bar shows `--- ?` and the menu's **Status** line explains why,
+followed by a code:
+
+| Code | Meaning | What to try |
+|---|---|---|
+| `AUTH-01` | Dexcom rejected the sign-in | Check the username, password, and **region** in Settings. Use the account that shares the data, not a follower's. Tidebar stops trying until you save Settings again. |
+| `AUTH-02` | Too many sign-in attempts | Dexcom has temporarily locked or rate-limited the account. Tidebar backs off and retries later; wait before trying again. |
+| `NET-01` | Couldn't reach Dexcom | Check your internet connection. This often shows briefly after the Mac wakes up. |
+| `DATA-01` | Signed in, but no readings | In the Dexcom app, make sure **Share** is on and you have at least one follower. |
+| `DATA-02` | Latest reading is over 12 minutes old | Check that your phone has signal and the Dexcom app is uploading. |
+| `SRV-01` | Unexpected response from Dexcom | Usually temporary. If it persists, Dexcom may have changed the API; please report it. |
+| `SETUP-01` / `SETUP-02` | No account or password saved | Open **Settings…** and enter your Dexcom account. |
+
+### Reporting a problem
+
+Choose **Report a Problem…** in Tidebar's menu. It copies a diagnostics report to your clipboard and
+opens a new GitHub issue. Paste the report into the **Diagnostics** field and review it before submitting.
+**Copy Diagnostics** copies the report without opening GitHub.
+
+The report contains your Tidebar and macOS versions, your region, unit, and launch-at-login settings,
+the current status, and the last 200 connection events (request names, HTTP status codes, Dexcom error
+codes, and timings). It **never** contains your username, password, account or session IDs, glucose
+values, or reading times. Tidebar never sends it anywhere; you choose whether to post it.
+
+The same events are written to the macOS system log:
+
+```sh
+log show --last 1h --predicate 'subsystem == "com.jnfcorp.Tidebar"'
+```
+
 ## Privacy
 
 - Your password is stored in the macOS Keychain. Your username and preferences are stored in UserDefaults.
 - Glucose readings are kept in memory only and are never written to disk.
+- Recent connection activity for diagnostics is kept in memory and also written to the macOS system log on your Mac. It never includes credentials or glucose data, and leaves your Mac only if you paste it somewhere.
 - Tidebar talks only to Dexcom's Share servers for your region. It has no analytics or tracking.
 - The app is sandboxed with only outgoing network access.
 
@@ -96,6 +129,7 @@ Pass `--help` to see its options.
 | `scripts/lint.sh --fix` | Auto-format, then lint |
 | `scripts/test.sh` | Run the unit tests |
 | `scripts/build.sh [Debug\|Release]` | Build the app |
+| `scripts/install-local.sh` | Build Release, install it in `/Applications`, and launch it (quits any running copy) |
 
 The scripts sign builds ad hoc, so you don't need an Apple developer account. In Xcode, if you get a
 signing error, choose your own team (or "Sign to Run Locally") under the Tidebar target's

@@ -23,6 +23,7 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
     private let region: DexcomShareRegion
     private let httpClient: any HTTPClient
     private let currentDateProvider: @Sendable () -> Date
+    private let diagnosticEventRecorder: any DiagnosticEventRecording
 
     private var cachedAccountIdentifier: String?
     private var cachedSessionIdentifier: String?
@@ -37,13 +38,15 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
         password: String,
         region: DexcomShareRegion,
         httpClient: any HTTPClient,
-        currentDateProvider: @escaping @Sendable () -> Date = { Date() }
+        currentDateProvider: @escaping @Sendable () -> Date = { Date() },
+        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder()
     ) {
         self.username = username
         self.password = password
         self.region = region
         self.httpClient = httpClient
         self.currentDateProvider = currentDateProvider
+        self.diagnosticEventRecorder = diagnosticEventRecorder
     }
 
     // MARK: - GlucoseProvider
@@ -92,6 +95,7 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
             )
         } catch is SessionRejectedError {
             Self.logger.info("Dexcom Share session expired; signing in again")
+            diagnosticEventRecorder.record(.sessionExpiredSigningInAgain)
             discardCachedSession(ifMatching: sessionIdentifier)
         }
 
@@ -104,6 +108,7 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
             )
         } catch is SessionRejectedError {
             Self.logger.error("Dexcom Share rejected a freshly created session")
+            diagnosticEventRecorder.record(.signInFailed(diagnosticCode: .signInRejected))
             discardCachedSession(ifMatching: refreshedSessionIdentifier)
             loginThrottle.recordLoginFailure(.invalidCredentials, at: currentDateProvider())
             throw GlucoseProviderError.invalidCredentials
@@ -135,16 +140,20 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
     private func performThrottledLogin() async throws -> String {
         if let throttledLoginError = loginThrottle.errorPreventingLoginAttempt(at: currentDateProvider()) {
             Self.logger.info("Skipping Dexcom Share sign-in while backing off")
+            diagnosticEventRecorder.record(.signInSkippedWhileBackingOff(diagnosticCode: throttledLoginError.diagnosticCode))
             throw throttledLoginError
         }
+        diagnosticEventRecorder.record(.signInStarted)
         do {
             let accountIdentifier = try await obtainAccountIdentifier()
             let sessionIdentifier = try await requestSessionIdentifier(accountIdentifier: accountIdentifier)
             loginThrottle.recordLoginSuccess()
+            diagnosticEventRecorder.record(.signInSucceeded)
             return sessionIdentifier
         } catch let loginFailure as GlucoseProviderError {
             Self.logger.error("Dexcom Share sign-in failed: \(String(describing: loginFailure), privacy: .public)")
             loginThrottle.recordLoginFailure(loginFailure, at: currentDateProvider())
+            diagnosticEventRecorder.record(.signInFailed(diagnosticCode: loginFailure.diagnosticCode))
             if loginFailure == .invalidCredentials {
                 cachedAccountIdentifier = nil
             }
@@ -232,7 +241,13 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
         jsonBody: some Encodable
     ) async throws -> Data {
         let urlRequest = try makePostRequest(to: endpoint, queryItems: queryItems, jsonBody: jsonBody)
-        let responsePayload = try await performRequestMappingTransportErrors(urlRequest)
+        let requestStartInstant = ContinuousClock.now
+        let responsePayload = try await performRequestMappingTransportErrors(
+            urlRequest,
+            endpoint: endpoint,
+            requestStartInstant: requestStartInstant
+        )
+        recordCompletedRequest(responsePayload, endpoint: endpoint, requestStartInstant: requestStartInstant)
         guard responsePayload.isSuccessfulStatusCode else {
             throw Self.mapFailedResponse(responsePayload, endpoint: endpoint)
         }
@@ -261,18 +276,54 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
         return urlRequest
     }
 
-    private func performRequestMappingTransportErrors(_ urlRequest: URLRequest) async throws -> HTTPResponsePayload {
+    private func performRequestMappingTransportErrors(
+        _ urlRequest: URLRequest,
+        endpoint: DexcomShareEndpoint,
+        requestStartInstant: ContinuousClock.Instant
+    ) async throws -> HTTPResponsePayload {
         do {
             return try await httpClient.performRequest(urlRequest)
         } catch let urlError as URLError where urlError.code == .cancelled {
             throw CancellationError()
-        } catch is URLError {
+        } catch let urlError as URLError {
+            diagnosticEventRecorder.record(
+                .requestFailedInTransport(
+                    requestName: endpoint.rawValue,
+                    transportErrorCode: urlError.code.rawValue,
+                    durationMilliseconds: Self.elapsedMilliseconds(since: requestStartInstant)
+                )
+            )
             throw GlucoseProviderError.networkUnavailable
         } catch is CancellationError {
             throw CancellationError()
         } catch {
             throw GlucoseProviderError.unexpectedResponse(description: "Request failed.")
         }
+    }
+
+    /// Records status and timing only. The server error code is included for failures; the
+    /// session ID (in the query string) and response bodies are never recorded.
+    private func recordCompletedRequest(
+        _ responsePayload: HTTPResponsePayload,
+        endpoint: DexcomShareEndpoint,
+        requestStartInstant: ContinuousClock.Instant
+    ) {
+        let serverErrorCode =
+            responsePayload.isSuccessfulStatusCode
+            ? nil
+            : DexcomShareResponseParsing.parseServerErrorCode(fromResponseData: responsePayload.responseBody)
+        diagnosticEventRecorder.record(
+            .requestCompleted(
+                requestName: endpoint.rawValue,
+                httpStatusCode: responsePayload.statusCode,
+                durationMilliseconds: Self.elapsedMilliseconds(since: requestStartInstant),
+                serverErrorCode: serverErrorCode
+            )
+        )
+    }
+
+    private static func elapsedMilliseconds(since startInstant: ContinuousClock.Instant) -> Int {
+        Int((ContinuousClock.now - startInstant) / .milliseconds(1))
     }
 
     private static let tooManyRequestsStatusCode = 429

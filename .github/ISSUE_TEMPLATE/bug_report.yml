@@ -1,0 +1,70 @@
+name: Bug report
+description: Something isn't working, such as an error code, a wrong value, or a crash.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. The fastest way to fill this in is **Report a Problem…** in
+        Tidebar's menu, which copies a diagnostics report for you to paste below.
+
+        **Never post your Dexcom username or password, or anything else you don't want public.** This issue is public.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+      placeholder: The menu bar shows "--- ?" and the menu says "Sign-in failed… (AUTH-01)" even though I can sign in to the Dexcom app.
+    validations:
+      required: true
+  - type: input
+    id: error-code
+    attributes:
+      label: Error code
+      description: The code shown in the menu's Status line, if any (e.g. AUTH-01, NET-01, DATA-01).
+      placeholder: AUTH-01
+  - type: dropdown
+    id: region
+    attributes:
+      label: Dexcom region
+      options:
+        - United States
+        - Outside United States
+        - Japan
+    validations:
+      required: true
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: How did you install Tidebar?
+      options:
+        - Homebrew
+        - Built from source
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        Paste the report from **Report a Problem…** or **Copy Diagnostics**. It never includes your username,
+        password, account or session IDs, or glucose readings, but please read it before submitting.
+      render: text
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: If you can make it happen again, how?
+      placeholder: |
+        1. Close the lid overnight
+        2. Open it in the morning
+        3. Tidebar stays on "--- ?" until I click Refresh Now
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before submitting
+      options:
+        - label: I've checked that this issue doesn't contain my Dexcom password or anything else I don't want public.
+          required: true
+        - label: The Dexcom app on my phone is showing readings (so Share itself is working).

@@ -39,7 +39,8 @@ nonisolated enum GlucoseProviderFactory {
     static func makeGlucoseProvider(
         for configuration: GlucoseProviderConfiguration,
         passwordStore: any PasswordStore,
-        httpClient: any HTTPClient
+        httpClient: any HTTPClient,
+        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder()
     ) throws(GlucoseProviderSetupError) -> any GlucoseProvider {
         switch configuration {
         case .dexcomShare(let username, let region):
@@ -51,7 +52,8 @@ nonisolated enum GlucoseProviderFactory {
                 username: username,
                 password: storedPassword,
                 region: region,
-                httpClient: httpClient
+                httpClient: httpClient,
+                diagnosticEventRecorder: diagnosticEventRecorder
             )
         }
     }
@@ -60,11 +62,17 @@ nonisolated enum GlucoseProviderFactory {
     static func makeGlucoseProviderFromSavedSettings(
         userDefaults: UserDefaults = .standard,
         passwordStore: any PasswordStore = KeychainPasswordStore.dexcomSharePasswordStore,
-        httpClient: any HTTPClient = URLSessionHTTPClient()
+        httpClient: any HTTPClient = URLSessionHTTPClient(),
+        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder()
     ) throws(GlucoseProviderSetupError) -> any GlucoseProvider {
         guard let savedConfiguration = GlucoseProviderConfiguration.loadSavedConfiguration(from: userDefaults) else {
             throw .missingConfiguration
         }
-        return try makeGlucoseProvider(for: savedConfiguration, passwordStore: passwordStore, httpClient: httpClient)
+        return try makeGlucoseProvider(
+            for: savedConfiguration,
+            passwordStore: passwordStore,
+            httpClient: httpClient,
+            diagnosticEventRecorder: diagnosticEventRecorder
+        )
     }
 }

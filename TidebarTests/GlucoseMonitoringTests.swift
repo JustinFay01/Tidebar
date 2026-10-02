@@ -263,7 +263,7 @@ struct GlucoseMonitorTests {
             currentDateProvider: testClock.makeDateProvider(),
             sleepFunction: { _ in throw CancellationError() }
         )
-        monitor.rebuildProviderAndRefresh()
+        monitor.resetProviderAndReadings()
         return monitor
     }
 
@@ -273,7 +273,7 @@ struct GlucoseMonitorTests {
         let nextDelay = await monitor.performFetch()
 
         #expect(nextDelay == nil)
-        #expect(monitor.displayState == .unknown(reason: GlucoseProviderSetupError.missingConfiguration.userFacingDescription))
+        #expect(monitor.displayState == .unknown(reason: GlucoseProviderSetupError.missingConfiguration.statusMessage))
         #expect(monitor.providerDisplayName == nil)
     }
 
@@ -330,7 +330,7 @@ struct GlucoseMonitorTests {
         let firstFailureDelay = await monitor.performFetch()
         let secondFailureDelay = await monitor.performFetch()
 
-        #expect(monitor.displayState == .unknown(reason: GlucoseProviderError.networkUnavailable.userFacingDescription))
+        #expect(monitor.displayState == .unknown(reason: GlucoseProviderError.networkUnavailable.statusMessage))
         #expect(monitor.latestReading != nil)
         #expect(firstFailureDelay == 15)
         #expect(secondFailureDelay == 30)
@@ -377,7 +377,7 @@ struct GlucoseMonitorTests {
         let monitor = makeMonitor()
         _ = await monitor.performFetch()
 
-        monitor.rebuildProviderAndRefresh()
+        monitor.resetProviderAndReadings()
 
         #expect(monitor.latestReading == nil)
         #expect(monitor.displayState == .unknown(reason: GlucoseReadingFreshness.awaitingFirstReadingReason))

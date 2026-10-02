@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/JustinFay01/Tidebar#troubleshooting
+    about: What each error code means and what to try first.
