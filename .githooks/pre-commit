@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Lints the Swift files staged for commit. Installed by scripts/setup.sh (git config core.hooksPath .githooks).
+# Bypass once with: git commit --no-verify
+
+set -euo pipefail
+
+stagedSwiftFiles=()
+while IFS= read -r stagedFilePath; do
+    stagedSwiftFiles+=("${stagedFilePath}")
+done < <(git diff --cached --name-only --diff-filter=ACMR -- '*.swift')
+
+if [[ ${#stagedSwiftFiles[@]} -eq 0 ]]; then
+    exit 0
+fi
+
+if ! xcrun swift-format lint --strict "${stagedSwiftFiles[@]}"; then
+    echo "" >&2
+    echo "swift-format found problems in staged files. 'scripts/lint.sh --fix' fixes formatting;" >&2
+    echo "fix anything else (e.g. force unwraps) by hand, re-stage, and commit again." >&2
+    exit 1
+fi

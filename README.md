@@ -30,7 +30,7 @@ A lightweight macOS menu bar app that shows your current Dexcom glucose value an
 **Build from source:**
 
 ```sh
-git clone <this repository>
+git clone https://github.com/JustinFay01/Tidebar.git
 cd Tidebar
 xcodebuild build -scheme Tidebar -configuration Release
 ```
@@ -77,11 +77,34 @@ The endpoints, region URLs, application IDs, and error codes come from these pro
 
 ## Development
 
-Run the unit tests:
+Building requires **Xcode 27** or later. To get set up, run:
 
 ```sh
-xcodebuild test -scheme Tidebar -destination 'platform=macOS' -only-testing:TidebarTests
+scripts/setup.sh
 ```
+
+The setup script:
+- checks your macOS, Xcode, and swift-format setup
+- installs a pre-commit hook that lints staged Swift files
+- runs the same lint, Release build, and unit tests as CI
+
+Pass `--help` to see its options.
+
+| Command | What it does |
+|---|---|
+| `scripts/lint.sh` | Lint with swift-format, using the rules in `.swift-format` |
+| `scripts/lint.sh --fix` | Auto-format, then lint |
+| `scripts/test.sh` | Run the unit tests |
+| `scripts/build.sh [Debug\|Release]` | Build the app |
+
+The scripts sign builds ad hoc, so you don't need an Apple developer account. In Xcode, if you get a
+signing error, choose your own team (or "Sign to Run Locally") under the Tidebar target's
+**Signing & Capabilities**, and don't commit that change.
+
+### Continuous integration
+
+Every pull request runs **Lint** and **Build & Test** on GitHub Actions
+(`.github/workflows/ci.yml`), using the same scripts as above, so a green local run should mean green CI.
 
 The code is split into layers so other data sources (e.g. Nightscout) can be added without touching the UI or polling:
 
