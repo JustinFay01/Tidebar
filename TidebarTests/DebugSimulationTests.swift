@@ -57,14 +57,15 @@ struct DebugSimulationTests {
         #expect(monitor.displayState == .unknown(reason: expectedError.userFacingDescription))
     }
 
-    @Test(arguments: [
-        (DebugSimulationScenario.currentReading, ExpectedDisplayKind.current, TrendDirection.flat),
-        (.agingReading, .aging, .flat),
-        (.staleReading, .unknown, .flat),
-        (.doubleUpTrend, .current, .doubleUp),
-        (.doubleDownTrend, .current, .doubleDown),
-        (.indeterminateTrend, .current, .notComputable),
-    ] as [(DebugSimulationScenario, ExpectedDisplayKind, TrendDirection)])
+    @Test(
+        arguments: [
+            (DebugSimulationScenario.currentReading, ExpectedDisplayKind.current, TrendDirection.flat),
+            (.agingReading, .aging, .flat),
+            (.staleReading, .unknown, .flat),
+            (.doubleUpTrend, .current, .doubleUp),
+            (.doubleDownTrend, .current, .doubleDown),
+            (.indeterminateTrend, .current, .notComputable),
+        ] as [(DebugSimulationScenario, ExpectedDisplayKind, TrendDirection)])
     func readingScenariosProduceExpectedDisplayState(
         simulationScenario: DebugSimulationScenario,
         expectedDisplayKind: ExpectedDisplayKind,

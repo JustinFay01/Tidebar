@@ -290,7 +290,9 @@ actor DexcomShareGlucoseProvider: GlucoseProvider {
         case .maximumAuthenticationAttemptsExceeded:
             return GlucoseProviderError.accountLockedOrRateLimited
         case .unrecognized(let code):
-            logger.error("Dexcom Share \(endpoint.rawValue, privacy: .public) failed: HTTP \(responsePayload.statusCode), code \(code ?? "none", privacy: .public)")
+            logger.error(
+                "Dexcom Share \(endpoint.rawValue, privacy: .public) failed: HTTP \(responsePayload.statusCode), code \(code ?? "none", privacy: .public)"
+            )
             return GlucoseProviderError.unexpectedResponse(
                 description: "Dexcom returned HTTP \(responsePayload.statusCode) (\(code ?? "no error code"))."
             )

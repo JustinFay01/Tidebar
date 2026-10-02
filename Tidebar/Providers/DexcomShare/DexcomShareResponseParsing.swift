@@ -11,7 +11,7 @@ nonisolated enum DexcomShareTimestampParser {
     static func parseDate(fromDexcomTimestamp dexcomTimestamp: String) -> Date? {
         let timestampPattern = /^Date\((?<epochMilliseconds>-?\d+)(?<timeZoneOffset>[+-]\d{4})?\)$/
         guard let timestampMatch = dexcomTimestamp.wholeMatch(of: timestampPattern),
-              let epochMilliseconds = Int64(timestampMatch.output.epochMilliseconds)
+            let epochMilliseconds = Int64(timestampMatch.output.epochMilliseconds)
         else {
             return nil
         }
@@ -100,7 +100,7 @@ nonisolated enum DexcomShareResponseParsing {
     /// Returns `nil` for the all-zero UUID, which Dexcom returns for failed authentication.
     static func parseIdentifier(fromResponseData responseData: Data) throws -> String? {
         guard let identifierString = try? JSONDecoder().decode(String.self, from: responseData),
-              UUID(uuidString: identifierString) != nil
+            UUID(uuidString: identifierString) != nil
         else {
             throw GlucoseProviderError.unexpectedResponse(description: "Sign-in response was not in the expected format.")
         }
@@ -123,8 +123,8 @@ nonisolated enum DexcomShareResponseParsing {
         case "SSO_AuthenticateMaxAttemptsExceeded":
             return .maximumAuthenticationAttemptsExceeded
         case "SSO_InternalError"
-            where messageText.contains("Cannot Authenticate by AccountName")
-                || messageText.contains("Cannot Authenticate by AccountId"):
+        where messageText.contains("Cannot Authenticate by AccountName")
+            || messageText.contains("Cannot Authenticate by AccountId"):
             return .invalidCredentials
         case "InvalidArgument" where messageText.contains("accountName") || messageText.contains("password"):
             return .invalidCredentials

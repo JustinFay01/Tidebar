@@ -130,8 +130,8 @@ final class GlucoseMonitor {
             )
         } catch {
             guard fetchProviderGeneration == providerGeneration,
-                  !Self.isCancellation(error),
-                  !Task.isCancelled
+                !Self.isCancellation(error),
+                !Task.isCancelled
             else {
                 return nil
             }

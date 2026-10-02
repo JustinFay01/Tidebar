@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+
 @testable import Tidebar
 
 struct DexcomShareGlucoseProviderTests {
@@ -47,7 +48,7 @@ struct DexcomShareGlucoseProviderTests {
 
     static func queryValue(named queryItemName: String, in urlRequest: URLRequest) -> String? {
         guard let requestURL = urlRequest.url,
-              let urlComponents = URLComponents(url: requestURL, resolvingAgainstBaseURL: false)
+            let urlComponents = URLComponents(url: requestURL, resolvingAgainstBaseURL: false)
         else {
             return nil
         }
@@ -64,9 +65,10 @@ struct DexcomShareGlucoseProviderTests {
 
         #expect(latestReading.valueMgPerDeciliter == 112)
         #expect(latestReading.trendDirection == .flat)
-        #expect(stubHTTPClient.recordedEndpoints() == [
-            .authenticatePublisherAccount, .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
-        ])
+        #expect(
+            stubHTTPClient.recordedEndpoints() == [
+                .authenticatePublisherAccount, .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
+            ])
 
         let recordedRequests = stubHTTPClient.recordedRequests
         let authenticateBody = try Self.decodeJSONBody(of: recordedRequests[0])
@@ -104,10 +106,11 @@ struct DexcomShareGlucoseProviderTests {
         _ = try await provider.fetchLatestReading()
         _ = try await provider.fetchLatestReading()
 
-        #expect(stubHTTPClient.recordedEndpoints() == [
-            .authenticatePublisherAccount, .loginPublisherAccountById,
-            .readPublisherLatestGlucoseValues, .readPublisherLatestGlucoseValues,
-        ])
+        #expect(
+            stubHTTPClient.recordedEndpoints() == [
+                .authenticatePublisherAccount, .loginPublisherAccountById,
+                .readPublisherLatestGlucoseValues, .readPublisherLatestGlucoseValues,
+            ])
     }
 
     @Test func requestsRecentReadingsWithClampedLookback() async throws {
@@ -138,10 +141,11 @@ struct DexcomShareGlucoseProviderTests {
         let latestReading = try await makeProvider().fetchLatestReading()
 
         #expect(latestReading.valueMgPerDeciliter == 112)
-        #expect(stubHTTPClient.recordedEndpoints() == [
-            .authenticatePublisherAccount, .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
-            .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
-        ])
+        #expect(
+            stubHTTPClient.recordedEndpoints() == [
+                .authenticatePublisherAccount, .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
+                .loginPublisherAccountById, .readPublisherLatestGlucoseValues,
+            ])
         let retriedReadingsRequest = try #require(stubHTTPClient.recordedRequests.last)
         #expect(Self.queryValue(named: "sessionId", in: retriedReadingsRequest) == Self.secondSessionIdentifier)
     }

@@ -5,6 +5,7 @@
 
 import Foundation
 import os
+
 @testable import Tidebar
 
 /// A clock tests can advance. Thread-safe so it can back `@Sendable` date providers.
@@ -61,8 +62,8 @@ final class StubHTTPClient: HTTPClient {
         let nextResult = lockedStubState.withLock { stubState -> Result<HTTPResponsePayload, Error>? in
             stubState.recordedRequests.append(urlRequest)
             guard let endpoint = Self.endpoint(for: urlRequest),
-                  var queuedResults = stubState.queuedResultsByEndpoint[endpoint],
-                  !queuedResults.isEmpty
+                var queuedResults = stubState.queuedResultsByEndpoint[endpoint],
+                !queuedResults.isEmpty
             else {
                 return nil
             }

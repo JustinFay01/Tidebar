@@ -72,9 +72,11 @@ struct SettingsView: View {
         } header: {
             Text("Dexcom Share Account")
         } footer: {
-            Text("Use the Dexcom account that shares the data (not a follower). Share must be enabled in the Dexcom app with at least one follower.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            Text(
+                "Use the Dexcom account that shares the data (not a follower). Share must be enabled in the Dexcom app with at least one follower."
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -235,7 +237,8 @@ struct SettingsView: View {
 
     /// The user can remove the login item in System Settings, so mirror the system's state.
     private func synchronizeLaunchAtLoginPreference() {
-        isLaunchAtLoginEnabled = LaunchAtLoginController.isRegisteredWithSystem
+        isLaunchAtLoginEnabled =
+            LaunchAtLoginController.isRegisteredWithSystem
             || LaunchAtLoginController.requiresUserApproval
         launchAtLoginMessage = approvalMessageIfNeeded()
     }

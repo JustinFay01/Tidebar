@@ -72,9 +72,11 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
         case .currentReading:
             return .success(Self.makeSimulatedReading(trendDirection: .flat, ageSeconds: 0, currentDate: currentDate))
         case .agingReading:
-            return .success(Self.makeSimulatedReading(trendDirection: .flat, ageSeconds: Self.agingReadingAgeSeconds, currentDate: currentDate))
+            let agingAgeSeconds = Self.agingReadingAgeSeconds
+            return .success(Self.makeSimulatedReading(trendDirection: .flat, ageSeconds: agingAgeSeconds, currentDate: currentDate))
         case .staleReading:
-            return .success(Self.makeSimulatedReading(trendDirection: .flat, ageSeconds: Self.staleReadingAgeSeconds, currentDate: currentDate))
+            let staleAgeSeconds = Self.staleReadingAgeSeconds
+            return .success(Self.makeSimulatedReading(trendDirection: .flat, ageSeconds: staleAgeSeconds, currentDate: currentDate))
         case .doubleUpTrend:
             return .success(Self.makeSimulatedReading(trendDirection: .doubleUp, ageSeconds: 0, currentDate: currentDate))
         case .doubleDownTrend:
@@ -84,7 +86,11 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
         }
     }
 
-    private static func makeSimulatedReading(trendDirection: TrendDirection, ageSeconds: TimeInterval, currentDate: Date) -> GlucoseReading {
+    private static func makeSimulatedReading(
+        trendDirection: TrendDirection,
+        ageSeconds: TimeInterval,
+        currentDate: Date
+    ) -> GlucoseReading {
         GlucoseReading(
             valueMgPerDeciliter: simulatedValueMgPerDeciliter,
             trendDirection: trendDirection,
