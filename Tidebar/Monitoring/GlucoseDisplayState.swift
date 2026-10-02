@@ -34,13 +34,17 @@ nonisolated enum GlucoseReadingFreshness {
             return .unknown(reason: awaitingFirstReadingReason)
         }
         let readingAgeSeconds = readingAge(of: latestReading, at: currentDate)
-        if readingAgeSeconds > staleThresholdSeconds {
+        if isStale(latestReading, at: currentDate) {
             return .unknown(reason: staleReadingReason(readingAgeSeconds: readingAgeSeconds))
         }
         if readingAgeSeconds >= agingThresholdSeconds {
             return .aging(latestReading)
         }
         return .current(latestReading)
+    }
+
+    static func isStale(_ glucoseReading: GlucoseReading, at currentDate: Date) -> Bool {
+        readingAge(of: glucoseReading, at: currentDate) > staleThresholdSeconds
     }
 
     /// Age in seconds, never negative (a reading timestamped slightly ahead of the local clock counts as brand new).
@@ -50,6 +54,6 @@ nonisolated enum GlucoseReadingFreshness {
 
     static func staleReadingReason(readingAgeSeconds: TimeInterval) -> String {
         let readingAgeMinutes = Int(readingAgeSeconds / 60)
-        return "No recent reading. The last one was \(readingAgeMinutes) min ago."
+        return TidebarDiagnosticCode.readingStale.appended(to: "No recent reading. The last one was \(readingAgeMinutes) min ago.")
     }
 }

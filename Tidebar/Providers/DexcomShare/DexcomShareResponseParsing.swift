@@ -107,6 +107,24 @@ nonisolated enum DexcomShareResponseParsing {
         return identifierString == defaultIdentifier ? nil : identifierString
     }
 
+    static let maximumServerErrorCodeLength = 64
+
+    /// Dexcom's `Code` field, reduced to identifier characters so it is safe to log.
+    /// The `Message` field is deliberately never exposed: it can echo account details.
+    static func parseServerErrorCode(fromResponseData responseData: Data) -> String? {
+        let errorBody = try? JSONDecoder().decode(DexcomShareErrorBody.self, from: responseData)
+        return errorBody?.code.flatMap(sanitizeServerErrorCode)
+    }
+
+    static func sanitizeServerErrorCode(_ serverErrorCode: String) -> String? {
+        let identifierCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        let sanitizedCode = String(
+            String.UnicodeScalarView(serverErrorCode.unicodeScalars.filter { identifierCharacters.contains($0) && $0.isASCII })
+        )
+        let truncatedCode = String(sanitizedCode.prefix(maximumServerErrorCodeLength))
+        return truncatedCode.isEmpty ? nil : truncatedCode
+    }
+
     static func parseServerFailure(fromResponseData responseData: Data) -> DexcomShareServerFailure {
         let errorBody = try? JSONDecoder().decode(DexcomShareErrorBody.self, from: responseData)
         return classifyServerFailure(code: errorBody?.code, message: errorBody?.message)

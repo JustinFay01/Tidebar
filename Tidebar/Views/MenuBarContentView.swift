@@ -9,6 +9,7 @@ import SwiftUI
 /// The dropdown menu: latest reading details, source, status, and actions.
 struct MenuBarContentView: View {
     let glucoseMonitor: GlucoseMonitor
+    let diagnosticsReporter: DiagnosticsReporter
     #if DEBUG
     let debugSimulationController: DebugSimulationController
     #endif
@@ -34,6 +35,16 @@ struct MenuBarContentView: View {
             openSettingsInForeground()
         }
         .keyboardShortcut(",")
+
+        Divider()
+
+        Button("Copy Diagnostics") {
+            diagnosticsReporter.copyReportToPasteboard()
+        }
+
+        Button("Report a Problem…") {
+            diagnosticsReporter.reportProblem()
+        }
 
         #if DEBUG
         Divider()

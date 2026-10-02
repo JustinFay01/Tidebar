@@ -27,7 +27,7 @@ struct DebugSimulationTests {
             currentDateProvider: testClock.makeDateProvider(),
             sleepFunction: { _ in throw CancellationError() }
         )
-        monitor.rebuildProviderAndRefresh()
+        monitor.resetProviderAndReadings()
         return monitor
     }
 
@@ -54,7 +54,7 @@ struct DebugSimulationTests {
         _ = await monitor.performFetch()
 
         #expect(monitor.lastFetchError == expectedError)
-        #expect(monitor.displayState == .unknown(reason: expectedError.userFacingDescription))
+        #expect(monitor.displayState == .unknown(reason: expectedError.statusMessage))
     }
 
     @Test(

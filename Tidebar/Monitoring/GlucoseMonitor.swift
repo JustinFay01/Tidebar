@@ -31,7 +31,35 @@ final class GlucoseMonitor {
 
     /// Why no value can be shown right now, if anything prevents it.
     var unavailableReason: String? {
-        providerSetupError?.userFacingDescription ?? lastFetchError?.userFacingDescription
+        providerSetupError?.statusMessage ?? lastFetchError?.statusMessage
+    }
+
+    /// The code for whatever is currently wrong, or `nil` when the display is healthy.
+    var currentDiagnosticCode: TidebarDiagnosticCode? {
+        if let providerSetupError {
+            return providerSetupError.diagnosticCode
+        }
+        if let lastFetchError {
+            return lastFetchError.diagnosticCode
+        }
+        if let latestReading, GlucoseReadingFreshness.isStale(latestReading, at: displayEvaluationDate) {
+            return .readingStale
+        }
+        return nil
+    }
+
+    /// Monitor state for diagnostics reports. Contains no glucose values or reading timestamps.
+    var diagnosticsStatus: GlucoseMonitorDiagnosticsStatus {
+        let currentDate = currentDateProvider()
+        return GlucoseMonitorDiagnosticsStatus(
+            displayStateKind: GlucoseMonitorDiagnosticsStatus.DisplayStateKind(displayState),
+            currentDiagnosticCode: currentDiagnosticCode,
+            providerDisplayName: providerDisplayName,
+            latestReadingAgeSeconds: latestReading.map { Int(GlucoseReadingFreshness.readingAge(of: $0, at: currentDate)) },
+            secondsSinceLastSuccessfulFetch: lastSuccessfulFetchDate.map { Int(currentDate.timeIntervalSince($0)) },
+            consecutiveFetchFailureCount: consecutiveFetchFailureCount,
+            isFetchInProgress: isFetchInProgress
+        )
     }
 
     var displayState: GlucoseDisplayState {
@@ -45,6 +73,7 @@ final class GlucoseMonitor {
     @ObservationIgnored private let providerBuilder: GlucoseProviderBuilder
     @ObservationIgnored private let currentDateProvider: () -> Date
     @ObservationIgnored private let sleepFunction: SleepFunction
+    @ObservationIgnored private let diagnosticEventRecorder: any DiagnosticEventRecording
     @ObservationIgnored private var glucoseProvider: (any GlucoseProvider)?
     /// Incremented whenever the provider is replaced, so results from an older provider are discarded.
     @ObservationIgnored private var providerGeneration = 0
@@ -56,11 +85,13 @@ final class GlucoseMonitor {
     init(
         providerBuilder: @escaping GlucoseProviderBuilder,
         currentDateProvider: @escaping () -> Date = { Date() },
-        sleepFunction: @escaping SleepFunction = { delaySeconds in try await Task.sleep(for: .seconds(delaySeconds)) }
+        sleepFunction: @escaping SleepFunction = { delaySeconds in try await Task.sleep(for: .seconds(delaySeconds)) },
+        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder()
     ) {
         self.providerBuilder = providerBuilder
         self.currentDateProvider = currentDateProvider
         self.sleepFunction = sleepFunction
+        self.diagnosticEventRecorder = diagnosticEventRecorder
         self.displayEvaluationDate = currentDateProvider()
     }
 
@@ -88,18 +119,25 @@ final class GlucoseMonitor {
 
     /// Fetches now and restarts the schedule from the result.
     func refreshNow() {
+        diagnosticEventRecorder.record(.refreshRequested)
         restartPolling()
     }
 
     /// Call when the provider should change (account settings saved, or a debug simulation chosen):
     /// discards the old provider and its data, then fetches.
     func rebuildProviderAndRefresh() {
+        resetProviderAndReadings()
+        restartPolling()
+    }
+
+    /// Rebuilds the provider and discards its data without fetching or starting the polling loop.
+    /// Tests use this to drive `performFetch()` directly, without a background fetch racing them.
+    func resetProviderAndReadings() {
         rebuildProvider()
         latestReading = nil
         lastFetchError = nil
         lastSuccessfulFetchDate = nil
         consecutiveFetchFailureCount = 0
-        restartPolling()
     }
 
     func updateDisplayEvaluationDate() {
@@ -117,6 +155,7 @@ final class GlucoseMonitor {
         let fetchProviderGeneration = providerGeneration
         activeFetchCount += 1
         defer { activeFetchCount -= 1 }
+        diagnosticEventRecorder.record(.fetchStarted)
 
         do {
             let fetchedReading = try await glucoseProvider.fetchLatestReading()
@@ -124,10 +163,12 @@ final class GlucoseMonitor {
                 return nil
             }
             recordSuccessfulFetch(fetchedReading)
-            return GlucoseFetchScheduler.delayAfterSuccessfulFetch(
+            let delayUntilNextFetch = GlucoseFetchScheduler.delayAfterSuccessfulFetch(
                 latestReadingTimestamp: fetchedReading.readingTimestamp,
                 currentDate: currentDateProvider()
             )
+            diagnosticEventRecorder.record(.nextFetchScheduled(delaySeconds: Int(delayUntilNextFetch)))
+            return delayUntilNextFetch
         } catch {
             guard fetchProviderGeneration == providerGeneration,
                 !Self.isCancellation(error),
@@ -137,14 +178,18 @@ final class GlucoseMonitor {
             }
             let fetchFailure = Self.normalizeFetchError(error)
             recordFailedFetch(fetchFailure)
-            return GlucoseFetchScheduler.delayAfterFailedFetch(
+            let delayUntilNextFetch = GlucoseFetchScheduler.delayAfterFailedFetch(
                 fetchFailure: fetchFailure,
                 consecutiveFailureCount: consecutiveFetchFailureCount
             )
+            diagnosticEventRecorder.record(.nextFetchScheduled(delaySeconds: Int(delayUntilNextFetch)))
+            return delayUntilNextFetch
         }
     }
 
     private func recordSuccessfulFetch(_ fetchedReading: GlucoseReading) {
+        let readingAgeSeconds = GlucoseReadingFreshness.readingAge(of: fetchedReading, at: currentDateProvider())
+        diagnosticEventRecorder.record(.fetchSucceeded(readingAgeSeconds: Int(readingAgeSeconds)))
         latestReading = fetchedReading
         lastFetchError = nil
         consecutiveFetchFailureCount = 0
@@ -153,6 +198,7 @@ final class GlucoseMonitor {
     }
 
     private func recordFailedFetch(_ fetchFailure: GlucoseProviderError) {
+        diagnosticEventRecorder.record(.fetchFailed(diagnosticCode: fetchFailure.diagnosticCode))
         lastFetchError = fetchFailure
         consecutiveFetchFailureCount += 1
         updateDisplayEvaluationDate()
@@ -175,10 +221,12 @@ final class GlucoseMonitor {
             glucoseProvider = builtProvider
             providerDisplayName = builtProvider.providerDisplayName
             providerSetupError = nil
+            diagnosticEventRecorder.record(.providerConfigured(providerName: builtProvider.providerDisplayName))
         case .failure(let setupError):
             glucoseProvider = nil
             providerDisplayName = nil
             providerSetupError = setupError
+            diagnosticEventRecorder.record(.providerSetupFailed(diagnosticCode: setupError.diagnosticCode))
         }
         updateDisplayEvaluationDate()
     }
@@ -224,8 +272,13 @@ final class GlucoseMonitor {
         systemWakeObservationTask = Task { [weak self] in
             let wakeNotifications = NSWorkspace.shared.notificationCenter.notifications(named: NSWorkspace.didWakeNotification)
             for await _ in wakeNotifications {
-                self?.refreshNow()
+                self?.recordSystemWakeAndRefresh()
             }
         }
+    }
+
+    private func recordSystemWakeAndRefresh() {
+        diagnosticEventRecorder.record(.systemWoke)
+        refreshNow()
     }
 }
