@@ -1,0 +1,549 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		D040AE8230705C0100B88B7B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D040AE6C30705C0000B88B7B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D040AE7330705C0000B88B7B;
+			remoteInfo = Tidebar;
+		};
+		D040AE8C30705C0100B88B7B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D040AE6C30705C0000B88B7B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D040AE7330705C0000B88B7B;
+			remoteInfo = Tidebar;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		D040AE7430705C0000B88B7B /* Tidebar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tidebar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D040AE8130705C0100B88B7B /* TidebarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TidebarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D040AE8B30705C0100B88B7B /* TidebarUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TidebarUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D040AE7630705C0000B88B7B /* Tidebar */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tidebar;
+			sourceTree = "<group>";
+		};
+		D040AE8430705C0100B88B7B /* TidebarTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TidebarTests;
+			sourceTree = "<group>";
+		};
+		D040AE8E30705C0100B88B7B /* TidebarUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TidebarUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D040AE7130705C0000B88B7B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		D040AE7E30705C0100B88B7B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		D040AE8830705C0100B88B7B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D040AE6B30705C0000B88B7B = {
+			isa = PBXGroup;
+			children = (
+				D040AE7630705C0000B88B7B /* Tidebar */,
+				D040AE8430705C0100B88B7B /* TidebarTests */,
+				D040AE8E30705C0100B88B7B /* TidebarUITests */,
+				D040AE7530705C0000B88B7B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D040AE7530705C0000B88B7B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D040AE7430705C0000B88B7B /* Tidebar.app */,
+				D040AE8130705C0100B88B7B /* TidebarTests.xctest */,
+				D040AE8B30705C0100B88B7B /* TidebarUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D040AE7330705C0000B88B7B /* Tidebar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D040AE9330705C0100B88B7B /* Build configuration list for PBXNativeTarget "Tidebar" */;
+			buildPhases = (
+				D040AE7030705C0000B88B7B /* Sources */,
+				D040AE7130705C0000B88B7B /* Frameworks */,
+				D040AE7230705C0000B88B7B /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				D040AE7630705C0000B88B7B /* Tidebar */,
+			);
+			name = Tidebar;
+			productName = Tidebar;
+			productReference = D040AE7430705C0000B88B7B /* Tidebar.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D040AE8030705C0100B88B7B /* TidebarTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D040AE9630705C0100B88B7B /* Build configuration list for PBXNativeTarget "TidebarTests" */;
+			buildPhases = (
+				D040AE7D30705C0100B88B7B /* Sources */,
+				D040AE7E30705C0100B88B7B /* Frameworks */,
+				D040AE7F30705C0100B88B7B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D040AE8330705C0100B88B7B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D040AE8430705C0100B88B7B /* TidebarTests */,
+			);
+			name = TidebarTests;
+			productName = TidebarTests;
+			productReference = D040AE8130705C0100B88B7B /* TidebarTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D040AE8A30705C0100B88B7B /* TidebarUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D040AE9930705C0100B88B7B /* Build configuration list for PBXNativeTarget "TidebarUITests" */;
+			buildPhases = (
+				D040AE8730705C0100B88B7B /* Sources */,
+				D040AE8830705C0100B88B7B /* Frameworks */,
+				D040AE8930705C0100B88B7B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D040AE8D30705C0100B88B7B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D040AE8E30705C0100B88B7B /* TidebarUITests */,
+			);
+			name = TidebarUITests;
+			productName = TidebarUITests;
+			productReference = D040AE8B30705C0100B88B7B /* TidebarUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D040AE6C30705C0000B88B7B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					D040AE7330705C0000B88B7B = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					D040AE8030705C0100B88B7B = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = D040AE7330705C0000B88B7B;
+					};
+					D040AE8A30705C0100B88B7B = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = D040AE7330705C0000B88B7B;
+					};
+				};
+			};
+			buildConfigurationList = D040AE6F30705C0000B88B7B /* Build configuration list for PBXProject "Tidebar" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D040AE6B30705C0000B88B7B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D040AE7530705C0000B88B7B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D040AE7330705C0000B88B7B /* Tidebar */,
+				D040AE8030705C0100B88B7B /* TidebarTests */,
+				D040AE8A30705C0100B88B7B /* TidebarUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D040AE7230705C0000B88B7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		D040AE7F30705C0100B88B7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		D040AE8930705C0100B88B7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D040AE7030705C0000B88B7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		D040AE7D30705C0100B88B7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		D040AE8730705C0100B88B7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D040AE8330705C0100B88B7B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D040AE7330705C0000B88B7B /* Tidebar */;
+			targetProxy = D040AE8230705C0100B88B7B /* PBXContainerItemProxy */;
+		};
+		D040AE8D30705C0100B88B7B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D040AE7330705C0000B88B7B /* Tidebar */;
+			targetProxy = D040AE8C30705C0100B88B7B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D040AE9130705C0100B88B7B /* Debug configuration for PBXProject "Tidebar" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D040AE9230705C0100B88B7B /* Release configuration for PBXProject "Tidebar" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		D040AE9430705C0100B88B7B /* Debug configuration for PBXNativeTarget "Tidebar" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.Tidebar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D040AE9530705C0100B88B7B /* Release configuration for PBXNativeTarget "Tidebar" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.Tidebar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D040AE9730705C0100B88B7B /* Debug configuration for PBXNativeTarget "TidebarTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.TidebarTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tidebar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tidebar";
+			};
+			name = Debug;
+		};
+		D040AE9830705C0100B88B7B /* Release configuration for PBXNativeTarget "TidebarTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.TidebarTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tidebar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tidebar";
+			};
+			name = Release;
+		};
+		D040AE9A30705C0100B88B7B /* Debug configuration for PBXNativeTarget "TidebarUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.TidebarUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Tidebar;
+			};
+			name = Debug;
+		};
+		D040AE9B30705C0100B88B7B /* Release configuration for PBXNativeTarget "TidebarUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZKAD968U79;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jnfcorp.TidebarUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Tidebar;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D040AE6F30705C0000B88B7B /* Build configuration list for PBXProject "Tidebar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D040AE9130705C0100B88B7B /* Debug configuration for PBXProject "Tidebar" */,
+				D040AE9230705C0100B88B7B /* Release configuration for PBXProject "Tidebar" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		D040AE9330705C0100B88B7B /* Build configuration list for PBXNativeTarget "Tidebar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D040AE9430705C0100B88B7B /* Debug configuration for PBXNativeTarget "Tidebar" */,
+				D040AE9530705C0100B88B7B /* Release configuration for PBXNativeTarget "Tidebar" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		D040AE9630705C0100B88B7B /* Build configuration list for PBXNativeTarget "TidebarTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D040AE9730705C0100B88B7B /* Debug configuration for PBXNativeTarget "TidebarTests" */,
+				D040AE9830705C0100B88B7B /* Release configuration for PBXNativeTarget "TidebarTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		D040AE9930705C0100B88B7B /* Build configuration list for PBXNativeTarget "TidebarUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D040AE9A30705C0100B88B7B /* Debug configuration for PBXNativeTarget "TidebarUITests" */,
+				D040AE9B30705C0100B88B7B /* Release configuration for PBXNativeTarget "TidebarUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D040AE6C30705C0000B88B7B /* Project object */;
+	validationLevel = 1;
+}
