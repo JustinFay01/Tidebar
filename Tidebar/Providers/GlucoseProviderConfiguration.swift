@@ -16,7 +16,8 @@ nonisolated enum GlucoseProviderConfiguration: Equatable, Sendable {
         guard !savedUsername.isEmpty else {
             return nil
         }
-        let savedRegion = userDefaults.string(forKey: AppSettingsKeys.dexcomRegion)
+        let savedRegion =
+            userDefaults.string(forKey: AppSettingsKeys.dexcomRegion)
             .flatMap(DexcomShareRegion.init(rawValue:)) ?? .unitedStates
         return .dexcomShare(username: savedUsername, region: savedRegion)
     }

@@ -5,8 +5,9 @@
 
 import AppKit
 import Foundation
-import os
 import Testing
+import os
+
 @testable import Tidebar
 
 /// Provider returning queued results in order and counting calls.
@@ -60,16 +61,17 @@ struct GlucoseReadingFreshnessTests {
         case current, aging, unknown
     }
 
-    @Test(arguments: [
-        (0.0, .current),
-        (-120.0, .current),
-        (359.0, .current),
-        (360.0, .aging),
-        (480.0, .aging),
-        (720.0, .aging),
-        (721.0, .unknown),
-        (10_800.0, .unknown),
-    ] as [(TimeInterval, ExpectedDisplayKind)])
+    @Test(
+        arguments: [
+            (0.0, .current),
+            (-120.0, .current),
+            (359.0, .current),
+            (360.0, .aging),
+            (480.0, .aging),
+            (720.0, .aging),
+            (721.0, .unknown),
+            (10_800.0, .unknown),
+        ] as [(TimeInterval, ExpectedDisplayKind)])
     func classifiesByReadingAge(readingAgeSeconds: TimeInterval, expectedDisplayKind: ExpectedDisplayKind) {
         let latestReading = makeReading(secondsBeforeReference: readingAgeSeconds)
 
@@ -149,18 +151,19 @@ struct GlucoseFetchSchedulerTests {
 struct GlucoseStatusFormatterTests {
     static let englishLocale = Locale(identifier: "en_US")
 
-    @Test(arguments: [
-        (TrendDirection.doubleUp, ["arrow.up", "arrow.up"]),
-        (.singleUp, ["arrow.up"]),
-        (.fortyFiveUp, ["arrow.up.right"]),
-        (.flat, ["arrow.right"]),
-        (.fortyFiveDown, ["arrow.down.right"]),
-        (.singleDown, ["arrow.down"]),
-        (.doubleDown, ["arrow.down", "arrow.down"]),
-        (.notComputable, ["questionmark"]),
-        (.rateOutOfRange, ["questionmark"]),
-        (.none, ["questionmark"]),
-    ] as [(TrendDirection, [String])])
+    @Test(
+        arguments: [
+            (TrendDirection.doubleUp, ["arrow.up", "arrow.up"]),
+            (.singleUp, ["arrow.up"]),
+            (.fortyFiveUp, ["arrow.up.right"]),
+            (.flat, ["arrow.right"]),
+            (.fortyFiveDown, ["arrow.down.right"]),
+            (.singleDown, ["arrow.down"]),
+            (.doubleDown, ["arrow.down", "arrow.down"]),
+            (.notComputable, ["questionmark"]),
+            (.rateOutOfRange, ["questionmark"]),
+            (.none, ["questionmark"]),
+        ] as [(TrendDirection, [String])])
     func formatsCurrentReadingWithTrendSymbols(trendDirection: TrendDirection, expectedSymbolNames: [String]) {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
             for: .current(makeReading(secondsBeforeReference: 60, trendDirection: trendDirection)),
@@ -168,20 +171,23 @@ struct GlucoseStatusFormatterTests {
             currentDate: referenceDate,
             locale: Self.englishLocale
         )
-        #expect(statusContent == GlucoseStatusFormatter.MenuBarStatusContent(
-            valueText: "112",
-            trendSymbolNames: expectedSymbolNames,
-            ageSuffixText: nil,
-            isDimmed: false
-        ))
+        #expect(
+            statusContent
+                == GlucoseStatusFormatter.MenuBarStatusContent(
+                    valueText: "112",
+                    trendSymbolNames: expectedSymbolNames,
+                    ageSuffixText: nil,
+                    isDimmed: false
+                ))
     }
 
     @Test func reservesWidthForEverySingleArrowButNotDoubles() {
         let widthReservingContents = GlucoseStatusFormatter.widthReservingContents(for: .milligramsPerDeciliter)
 
-        #expect(widthReservingContents.map(\.trendSymbolNames) == [
-            ["arrow.up"], ["arrow.up.right"], ["arrow.right"], ["arrow.down.right"], ["arrow.down"], ["questionmark"],
-        ])
+        #expect(
+            widthReservingContents.map(\.trendSymbolNames) == [
+                ["arrow.up"], ["arrow.up.right"], ["arrow.right"], ["arrow.down.right"], ["arrow.down"], ["questionmark"],
+            ])
         #expect(widthReservingContents.allSatisfy { $0.valueText == "000" && $0.ageSuffixText == nil })
     }
 
@@ -204,12 +210,14 @@ struct GlucoseStatusFormatterTests {
             currentDate: referenceDate,
             locale: Locale(identifier: localeIdentifier)
         )
-        #expect(statusContent == GlucoseStatusFormatter.MenuBarStatusContent(
-            valueText: expectedValueText,
-            trendSymbolNames: ["arrow.right"],
-            ageSuffixText: "8m",
-            isDimmed: true
-        ))
+        #expect(
+            statusContent
+                == GlucoseStatusFormatter.MenuBarStatusContent(
+                    valueText: expectedValueText,
+                    trendSymbolNames: ["arrow.right"],
+                    ageSuffixText: "8m",
+                    isDimmed: true
+                ))
     }
 
     @Test(arguments: GlucoseUnit.allCases)

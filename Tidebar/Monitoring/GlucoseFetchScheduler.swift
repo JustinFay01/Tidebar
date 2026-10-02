@@ -16,7 +16,8 @@ nonisolated enum GlucoseFetchScheduler {
 
     /// Waits until the next reading is expected; if it is already overdue, polls every minute.
     static func delayAfterSuccessfulFetch(latestReadingTimestamp: Date, currentDate: Date) -> TimeInterval {
-        let expectedNextReadingDate = latestReadingTimestamp
+        let expectedNextReadingDate =
+            latestReadingTimestamp
             .addingTimeInterval(sensorReadingInterval + readingPublicationGracePeriod)
         let secondsUntilExpectedNextReading = expectedNextReadingDate.timeIntervalSince(currentDate)
         guard secondsUntilExpectedNextReading > 0 else {

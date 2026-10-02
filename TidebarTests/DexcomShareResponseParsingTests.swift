@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+
 @testable import Tidebar
 
 struct DexcomShareTimestampParserTests {
@@ -56,7 +57,8 @@ struct DexcomShareResponseParsingTests {
 
     @Test(arguments: TrendDirection.allCases)
     func mapsEveryTrendString(expectedTrendDirection: TrendDirection) throws {
-        let responseData = Data("""
+        let responseData = Data(
+            """
             [{"WT":"Date(1690000000000)","Value":150,"Trend":"\(expectedTrendDirection.rawValue)"}]
             """.utf8)
 
@@ -73,7 +75,8 @@ struct DexcomShareResponseParsingTests {
         (42, TrendDirection.none),
     ])
     func mapsLegacyIntegerTrends(legacyTrendIndex: Int, expectedTrendDirection: TrendDirection) throws {
-        let responseData = Data("""
+        let responseData = Data(
+            """
             [{"WT":"Date(1690000000000)","Value":150,"Trend":\(legacyTrendIndex)}]
             """.utf8)
 
@@ -101,9 +104,10 @@ struct DexcomShareResponseParsingTests {
     @Test func parsesIdentifierAndTreatsAllZeroUUIDAsMissing() throws {
         let validIdentifier = "1e913fce-5a34-4d27-a991-b6cb3a3bd3d8"
         #expect(try DexcomShareResponseParsing.parseIdentifier(fromResponseData: Data("\"\(validIdentifier)\"".utf8)) == validIdentifier)
-        #expect(try DexcomShareResponseParsing.parseIdentifier(
-            fromResponseData: Data("\"\(DexcomShareResponseParsing.defaultIdentifier)\"".utf8)
-        ) == nil)
+        #expect(
+            try DexcomShareResponseParsing.parseIdentifier(
+                fromResponseData: Data("\"\(DexcomShareResponseParsing.defaultIdentifier)\"".utf8)
+            ) == nil)
         #expect(throws: GlucoseProviderError.self) {
             try DexcomShareResponseParsing.parseIdentifier(fromResponseData: Data("\"not-a-uuid\"".utf8))
         }
@@ -119,13 +123,14 @@ struct DexcomShareResponseParsingTests {
         #expect(DexcomShareResponseParsing.parseServerFailure(fromResponseData: responseData) == expectedServerFailure)
     }
 
-    @Test(arguments: [
-        ("SessionIdNotFound", nil, DexcomShareServerFailure.sessionExpiredOrInvalid),
-        ("SSO_InternalError", "Cannot Authenticate by AccountName", DexcomShareServerFailure.invalidCredentials),
-        ("SSO_InternalError", "Something else", DexcomShareServerFailure.unrecognized(code: "SSO_InternalError")),
-        ("InvalidArgument", "accountName must not be empty", DexcomShareServerFailure.invalidCredentials),
-        (nil, nil, DexcomShareServerFailure.unrecognized(code: nil)),
-    ] as [(String?, String?, DexcomShareServerFailure)])
+    @Test(
+        arguments: [
+            ("SessionIdNotFound", nil, DexcomShareServerFailure.sessionExpiredOrInvalid),
+            ("SSO_InternalError", "Cannot Authenticate by AccountName", DexcomShareServerFailure.invalidCredentials),
+            ("SSO_InternalError", "Something else", DexcomShareServerFailure.unrecognized(code: "SSO_InternalError")),
+            ("InvalidArgument", "accountName must not be empty", DexcomShareServerFailure.invalidCredentials),
+            (nil, nil, DexcomShareServerFailure.unrecognized(code: nil)),
+        ] as [(String?, String?, DexcomShareServerFailure)])
     func classifiesErrorCodes(code: String?, message: String?, expectedServerFailure: DexcomShareServerFailure) {
         #expect(DexcomShareResponseParsing.classifyServerFailure(code: code, message: message) == expectedServerFailure)
     }
