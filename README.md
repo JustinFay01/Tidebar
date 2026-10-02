@@ -1,6 +1,18 @@
-# Tidebar
+<p align="center">
+  <img width="200" height="200" src="docs/images/app-icon.png" alt="Tidebar app icon">
+</p>
 
-A lightweight macOS menu bar app that shows your current Dexcom glucose value and trend, e.g. `112 →`.
+<h1 align="center">Tidebar</h1>
+
+<p align="center">
+  A lightweight macOS menu bar app that shows your current Dexcom glucose value and trend, e.g. <code>112 →</code>.
+</p>
+
+<p align="center">
+  <a href="https://github.com/JustinFay01/Tidebar/releases/latest"><img src="https://img.shields.io/badge/download-latest-brightgreen.svg" alt="Download the latest release"></a>
+  <a href="#requirements"><img src="https://img.shields.io/badge/platform-macOS-lightgrey.svg" alt="Platform: macOS"></a>
+  <a href="#requirements"><img src="https://img.shields.io/badge/requirements-macOS%2014%20Sonoma%2B-ff69b4.svg" alt="Requires macOS 14 Sonoma or later"></a>
+</p>
 
 > [!WARNING]
 > Tidebar is an independent project and is **not affiliated with, endorsed by, or supported by Dexcom**.
