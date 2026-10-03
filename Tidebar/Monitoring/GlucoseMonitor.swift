@@ -74,6 +74,7 @@ final class GlucoseMonitor {
     @ObservationIgnored private let currentDateProvider: () -> Date
     @ObservationIgnored private let sleepFunction: SleepFunction
     @ObservationIgnored private let diagnosticEventRecorder: any DiagnosticEventRecording
+    @ObservationIgnored private let networkConnectivityMonitor: any NetworkConnectivityMonitoring
     @ObservationIgnored private var glucoseProvider: (any GlucoseProvider)?
     /// Incremented whenever the provider is replaced, so results from an older provider are discarded.
     @ObservationIgnored private var providerGeneration = 0
@@ -81,17 +82,20 @@ final class GlucoseMonitor {
     @ObservationIgnored private var pollingTask: Task<Void, Never>?
     @ObservationIgnored private var displayRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var systemWakeObservationTask: Task<Void, Never>?
+    @ObservationIgnored private var networkConnectivityObservationTask: Task<Void, Never>?
 
     init(
         providerBuilder: @escaping GlucoseProviderBuilder,
         currentDateProvider: @escaping () -> Date = { Date() },
         sleepFunction: @escaping SleepFunction = { delaySeconds in try await Task.sleep(for: .seconds(delaySeconds)) },
-        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder()
+        diagnosticEventRecorder: any DiagnosticEventRecording = DisabledDiagnosticEventRecorder(),
+        networkConnectivityMonitor: any NetworkConnectivityMonitoring = AlwaysAvailableNetworkConnectivityMonitor()
     ) {
         self.providerBuilder = providerBuilder
         self.currentDateProvider = currentDateProvider
         self.sleepFunction = sleepFunction
         self.diagnosticEventRecorder = diagnosticEventRecorder
+        self.networkConnectivityMonitor = networkConnectivityMonitor
         self.displayEvaluationDate = currentDateProvider()
     }
 
@@ -103,6 +107,8 @@ final class GlucoseMonitor {
             return
         }
         rebuildProvider()
+        // Subscribe before the first fetch so a restoration right after an offline skip isn't missed.
+        startObservingNetworkConnectivity()
         restartPolling()
         startDisplayRefreshLoop()
         startObservingSystemWake()
@@ -112,9 +118,11 @@ final class GlucoseMonitor {
         pollingTask?.cancel()
         displayRefreshTask?.cancel()
         systemWakeObservationTask?.cancel()
+        networkConnectivityObservationTask?.cancel()
         pollingTask = nil
         displayRefreshTask = nil
         systemWakeObservationTask = nil
+        networkConnectivityObservationTask = nil
     }
 
     /// Fetches now and restarts the schedule from the result.
@@ -152,6 +160,9 @@ final class GlucoseMonitor {
         guard let glucoseProvider else {
             return nil
         }
+        guard networkConnectivityMonitor.isNetworkAvailable else {
+            return skipFetchWhileOffline()
+        }
         let fetchProviderGeneration = providerGeneration
         activeFetchCount += 1
         defer { activeFetchCount -= 1 }
@@ -185,6 +196,15 @@ final class GlucoseMonitor {
             diagnosticEventRecorder.record(.nextFetchScheduled(delaySeconds: Int(delayUntilNextFetch)))
             return delayUntilNextFetch
         }
+    }
+
+    /// Shows the network problem without contacting the provider. The connectivity observer fetches
+    /// as soon as the network returns; the returned delay is only a fallback re-check.
+    private func skipFetchWhileOffline() -> TimeInterval {
+        diagnosticEventRecorder.record(.fetchSkippedWhileOffline)
+        lastFetchError = .networkUnavailable
+        updateDisplayEvaluationDate()
+        return GlucoseFetchScheduler.offlineRecheckInterval
     }
 
     private func recordSuccessfulFetch(_ fetchedReading: GlucoseReading) {
@@ -279,6 +299,27 @@ final class GlucoseMonitor {
 
     private func recordSystemWakeAndRefresh() {
         diagnosticEventRecorder.record(.systemWoke)
+        refreshNow()
+    }
+
+    private func startObservingNetworkConnectivity() {
+        networkConnectivityObservationTask?.cancel()
+        let connectivityChanges = networkConnectivityMonitor.connectivityChanges()
+        networkConnectivityObservationTask = Task { [weak self] in
+            for await isNetworkAvailable in connectivityChanges {
+                self?.handleNetworkConnectivityChange(isNetworkAvailable: isNetworkAvailable)
+            }
+        }
+    }
+
+    private func handleNetworkConnectivityChange(isNetworkAvailable: Bool) {
+        guard isNetworkAvailable else {
+            diagnosticEventRecorder.record(.networkLost)
+            return
+        }
+        diagnosticEventRecorder.record(.networkRestored)
+        // Start the backoff over: a failure right after reconnecting should retry quickly.
+        consecutiveFetchFailureCount = 0
         refreshNow()
     }
 }

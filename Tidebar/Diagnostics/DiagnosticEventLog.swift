@@ -16,7 +16,10 @@ nonisolated enum DiagnosticEventKind: Equatable, Sendable {
     case providerSetupFailed(diagnosticCode: TidebarDiagnosticCode)
     case refreshRequested
     case systemWoke
+    case networkLost
+    case networkRestored
     case fetchStarted
+    case fetchSkippedWhileOffline
     case fetchSucceeded(readingAgeSeconds: Int)
     case fetchFailed(diagnosticCode: TidebarDiagnosticCode)
     case nextFetchScheduled(delaySeconds: Int)
@@ -90,6 +93,12 @@ nonisolated enum DiagnosticEventDescriber {
             return "Refresh requested"
         case .systemWoke:
             return "Mac woke from sleep"
+        case .networkLost:
+            return "Network lost"
+        case .networkRestored:
+            return "Network restored"
+        case .fetchSkippedWhileOffline:
+            return "Fetch skipped; network offline"
         case .fetchStarted:
             return "Fetch started"
         case .fetchSucceeded(let readingAgeSeconds):

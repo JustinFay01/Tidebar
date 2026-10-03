@@ -17,6 +17,7 @@ struct TidebarApp: App {
 
     init() {
         let diagnosticEventLog = DiagnosticEventLog()
+        let networkConnectivityMonitor = SystemNetworkConnectivityMonitor()
         #if DEBUG
         let debugSimulationController = DebugSimulationController()
         _debugSimulationController = State(initialValue: debugSimulationController)
@@ -27,12 +28,14 @@ struct TidebarApp: App {
                 }
                 return Self.buildProviderFromSavedSettings(diagnosticEventLog: diagnosticEventLog)
             },
-            diagnosticEventRecorder: diagnosticEventLog
+            diagnosticEventRecorder: diagnosticEventLog,
+            networkConnectivityMonitor: networkConnectivityMonitor
         )
         #else
         let glucoseMonitor = GlucoseMonitor(
             providerBuilder: { Self.buildProviderFromSavedSettings(diagnosticEventLog: diagnosticEventLog) },
-            diagnosticEventRecorder: diagnosticEventLog
+            diagnosticEventRecorder: diagnosticEventLog,
+            networkConnectivityMonitor: networkConnectivityMonitor
         )
         #endif
         if !Self.isRunningUnitTests {

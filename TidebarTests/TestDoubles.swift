@@ -94,6 +94,33 @@ final class StubHTTPClient: HTTPClient {
     }
 }
 
+/// Connectivity that tests flip by hand.
+final class StubNetworkConnectivityMonitor: NetworkConnectivityMonitoring {
+    private let lockedIsNetworkAvailable: OSAllocatedUnfairLock<Bool>
+    private let lockedChangeContinuations = OSAllocatedUnfairLock(initialState: [AsyncStream<Bool>.Continuation]())
+
+    init(isNetworkAvailable: Bool = true) {
+        lockedIsNetworkAvailable = OSAllocatedUnfairLock(initialState: isNetworkAvailable)
+    }
+
+    var isNetworkAvailable: Bool {
+        lockedIsNetworkAvailable.withLock { $0 }
+    }
+
+    func connectivityChanges() -> AsyncStream<Bool> {
+        let (changeStream, changeContinuation) = AsyncStream.makeStream(of: Bool.self)
+        lockedChangeContinuations.withLock { $0.append(changeContinuation) }
+        return changeStream
+    }
+
+    func setNetworkAvailable(_ isNetworkAvailable: Bool) {
+        lockedIsNetworkAvailable.withLock { $0 = isNetworkAvailable }
+        for changeContinuation in lockedChangeContinuations.withLock({ $0 }) {
+            changeContinuation.yield(isNetworkAvailable)
+        }
+    }
+}
+
 final class InMemoryPasswordStore: PasswordStore {
     private let lockedPassword: OSAllocatedUnfairLock<String?>
 

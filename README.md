@@ -26,7 +26,7 @@
 - `--- ?` when data is missing, stale (older than 12 minutes), or can't be fetched, so an old value is never shown as current.
 - mg/dL or mmol/L, formatted for your locale.
 - Configurable menu bar font, weight, and size.
-- Polls on the sensor's 5-minute cadence, and refreshes after the Mac wakes from sleep.
+- Polls on the sensor's 5-minute cadence, and refreshes after the Mac wakes from sleep or the network comes back.
 - Lives only in the menu bar: no Dock icon or windows besides Settings. Optional launch at login.
 
 ## Requirements

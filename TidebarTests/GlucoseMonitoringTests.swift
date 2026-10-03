@@ -255,13 +255,15 @@ struct GlucoseStatusFormatterTests {
 struct GlucoseMonitorTests {
     let testClock = MutableTestClock(startingAt: referenceDate)
     let stubProvider = StubGlucoseProvider()
+    let stubConnectivityMonitor = StubNetworkConnectivityMonitor()
 
     func makeMonitor(providerSetupResult: Result<any GlucoseProvider, GlucoseProviderSetupError>? = nil) -> GlucoseMonitor {
         let resolvedSetupResult = providerSetupResult ?? .success(stubProvider)
         let monitor = GlucoseMonitor(
             providerBuilder: { resolvedSetupResult },
             currentDateProvider: testClock.makeDateProvider(),
-            sleepFunction: { _ in throw CancellationError() }
+            sleepFunction: { _ in throw CancellationError() },
+            networkConnectivityMonitor: stubConnectivityMonitor
         )
         monitor.resetProviderAndReadings()
         return monitor
@@ -370,6 +372,56 @@ struct GlucoseMonitorTests {
 
         #expect(nextDelay == nil)
         #expect(monitor.lastFetchError == nil)
+    }
+
+    @Test func offlineSkipsFetchAndShowsNetworkUnavailable() async {
+        stubConnectivityMonitor.setNetworkAvailable(false)
+        let monitor = makeMonitor()
+
+        let nextDelay = await monitor.performFetch()
+
+        #expect(stubProvider.fetchCount == 0)
+        #expect(monitor.displayState == .unknown(reason: GlucoseProviderError.networkUnavailable.statusMessage))
+        #expect(nextDelay == GlucoseFetchScheduler.offlineRecheckInterval)
+    }
+
+    @Test func networkRestorationFetchesImmediately() async throws {
+        let restoredReading = makeReading(secondsBeforeReference: 30)
+        stubProvider.enqueue(.success(restoredReading))
+        stubConnectivityMonitor.setNetworkAvailable(false)
+        let monitor = makeMonitor()
+        monitor.start()
+        defer { monitor.stop() }
+        try await waitUntil { monitor.lastFetchError == .networkUnavailable }
+        #expect(stubProvider.fetchCount == 0)
+
+        stubConnectivityMonitor.setNetworkAvailable(true)
+
+        try await waitUntil { monitor.latestReading != nil }
+        #expect(stubProvider.fetchCount == 1)
+        #expect(monitor.displayState == .current(restoredReading))
+    }
+
+    @Test func networkLossAloneDoesNotFetch() async throws {
+        stubProvider.enqueue(.success(makeReading(secondsBeforeReference: 30)))
+        let monitor = makeMonitor()
+        monitor.start()
+        defer { monitor.stop() }
+        try await waitUntil { monitor.latestReading != nil }
+
+        stubConnectivityMonitor.setNetworkAvailable(false)
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(stubProvider.fetchCount == 1)
+        #expect(monitor.lastFetchError == nil)
+    }
+
+    /// Polls a main-actor condition that background tasks of the monitor will make true.
+    private func waitUntil(_ condition: () -> Bool) async throws {
+        for _ in 0..<200 where !condition() {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        try #require(condition())
     }
 
     @Test func applyingNewSettingsClearsPreviousReading() async {
