@@ -37,7 +37,14 @@
 
 ## Installation
 
-**Homebrew:** coming soon.
+**Homebrew:**
+
+```sh
+brew install --cask justinfay01/tap/tidebar
+```
+
+**Direct download:** get `Tidebar-<version>.zip` from the [latest release](https://github.com/JustinFay01/Tidebar/releases/latest),
+unzip it, and move `Tidebar.app` to `/Applications`. Releases are signed with a Developer ID and notarized by Apple.
 
 **Build from source:**
 
@@ -162,6 +169,11 @@ The code is split into layers so other data sources (e.g. Nightscout) can be add
 | `Tidebar/Persistence` | Keychain, settings keys, launch at login |
 | `Tidebar/Views` | Menu bar label, dropdown menu, Settings |
 | `Tidebar/Debug` | Debug-build-only error and reading simulation |
+
+### Releasing
+
+Releases are signed with a Developer ID, notarized, and published from the maintainer's Mac using the
+scripts in [`release/`](release/). See [release/README.md](release/README.md) for the runbook.
 
 ### Debug menu
 

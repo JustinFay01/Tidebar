@@ -49,6 +49,13 @@ require_supported_xcode() {
     fi
 }
 
+# The team the project signs with (Release configuration). Set it in the Tidebar target's
+# Signing & Capabilities; the release scripts follow it.
+project_development_team() {
+    xcodebuild -showBuildSettings -scheme "${XCODE_SCHEME}" -configuration Release 2>/dev/null |
+        awk '$1 == "DEVELOPMENT_TEAM" { print $3; exit }'
+}
+
 require_swift_format() {
     if ! xcrun --find swift-format >/dev/null 2>&1; then
         fail_with_message "swift-format was not found in the selected Xcode toolchain. Xcode ${MINIMUM_XCODE_MAJOR_VERSION}+ includes it."
