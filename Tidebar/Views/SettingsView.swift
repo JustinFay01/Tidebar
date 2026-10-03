@@ -207,7 +207,18 @@ struct SettingsView: View {
         draftUsername = savedUsername
         draftRegion = savedRegion
         draftPassword = ""
-        hasStoredPassword = Self.passwordExists(in: passwordStore)
+        refreshStoredPasswordState()
+    }
+
+    /// A failed Keychain read is reported instead of looking like no password was ever saved.
+    private func refreshStoredPasswordState() {
+        do {
+            hasStoredPassword = !(try passwordStore.readPassword() ?? "").isEmpty
+        } catch {
+            hasStoredPassword = false
+            isAwaitingConnectionResult = false
+            accountStatusMessage = "Couldn't read the password from Keychain."
+        }
     }
 
     /// Keeps the stored password when the field is left blank.
@@ -224,9 +235,9 @@ struct SettingsView: View {
         savedUsername = trimmedDraftUsername
         savedRegion = draftRegion
         draftPassword = ""
-        hasStoredPassword = Self.passwordExists(in: passwordStore)
         accountStatusMessage = nil
         isAwaitingConnectionResult = true
+        refreshStoredPasswordState()
         glucoseMonitor.rebuildProviderAndRefresh()
     }
 
@@ -237,11 +248,6 @@ struct SettingsView: View {
         accountStatusMessage = "Account removed."
         isAwaitingConnectionResult = false
         glucoseMonitor.rebuildProviderAndRefresh()
-    }
-
-    private static func passwordExists(in passwordStore: any PasswordStore) -> Bool {
-        let storedPassword = try? passwordStore.readPassword()
-        return !(storedPassword ?? "").isEmpty
     }
 
     // MARK: - Launch at login
