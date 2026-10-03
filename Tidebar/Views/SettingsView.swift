@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var draftRegion = DexcomShareRegion.unitedStates
     @State private var hasStoredPassword = false
     @State private var accountStatusMessage: String?
+    @State private var isAwaitingConnectionResult = false
     @State private var launchAtLoginMessage: String?
 
     var body: some View {
@@ -54,8 +55,8 @@ struct SettingsView: View {
                 }
             }
             HStack {
-                if let accountStatusMessage {
-                    Text(accountStatusMessage)
+                if let displayedAccountStatusMessage {
+                    Text(displayedAccountStatusMessage)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -183,6 +184,17 @@ struct SettingsView: View {
         draftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// After a save, follows the monitor until the first fetch with the new account succeeds or fails.
+    private var displayedAccountStatusMessage: String? {
+        guard isAwaitingConnectionResult else {
+            return accountStatusMessage
+        }
+        if let unavailableReason = glucoseMonitor.unavailableReason {
+            return unavailableReason
+        }
+        return glucoseMonitor.lastSuccessfulFetchDate == nil ? "Saved. Connecting…" : "Connected."
+    }
+
     private var passwordPrompt: String {
         hasStoredPassword ? "Saved in Keychain" : "Required"
     }
@@ -205,6 +217,7 @@ struct SettingsView: View {
                 try passwordStore.savePassword(draftPassword)
             } catch {
                 accountStatusMessage = "Couldn't save the password to Keychain."
+                isAwaitingConnectionResult = false
                 return
             }
         }
@@ -212,7 +225,8 @@ struct SettingsView: View {
         savedRegion = draftRegion
         draftPassword = ""
         hasStoredPassword = Self.passwordExists(in: passwordStore)
-        accountStatusMessage = "Saved. Connecting…"
+        accountStatusMessage = nil
+        isAwaitingConnectionResult = true
         glucoseMonitor.rebuildProviderAndRefresh()
     }
 
@@ -221,6 +235,7 @@ struct SettingsView: View {
         savedUsername = ""
         loadAccountDrafts()
         accountStatusMessage = "Account removed."
+        isAwaitingConnectionResult = false
         glucoseMonitor.rebuildProviderAndRefresh()
     }
 
