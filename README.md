@@ -20,6 +20,10 @@
 > It is **not a medical device**. Do not use it to make treatment decisions. Always confirm with your
 > Dexcom receiver or app.
 
+<p align="center">
+  <img width="328" src="docs/images/menu-dropdown.png" alt="Tidebar's menu open below the menu bar, showing 112 mg/dL, steady, and up to date">
+</p>
+
 ## Features
 
 - Current glucose and trend arrow in the menu bar. Values 6–12 minutes old are dimmed and show their age (`112 → 8m`).
@@ -28,6 +32,14 @@
 - Configurable menu bar font, weight, and size.
 - Polls on the sensor's 5-minute cadence, and refreshes after the Mac wakes from sleep or the network comes back.
 - Lives only in the menu bar: no Dock icon or windows besides Settings. Optional launch at login.
+
+| Menu bar | Meaning |
+|---|---|
+| <img height="33" src="docs/images/menu-bar-current.png" alt="112 with a right arrow"> | Current reading, steady |
+| <img height="33" src="docs/images/menu-bar-rising.png" alt="112 with two up arrows"> | Rising quickly |
+| <img height="33" src="docs/images/menu-bar-falling.png" alt="112 with two down arrows"> | Falling quickly |
+| <img height="33" src="docs/images/menu-bar-aging.png" alt="Dimmed 112 with a right arrow and 8m"> | Reading is 6–12 minutes old: dimmed, with its age |
+| <img height="33" src="docs/images/menu-bar-unavailable.png" alt="Three dashes and a question mark"> | Missing, stale, or can't be fetched |
 
 ## Requirements
 
@@ -61,10 +73,18 @@ Or open `Tidebar.xcodeproj` in Xcode and run the `Tidebar` scheme.
 1. Open Tidebar's menu in the menu bar and choose **Settings…**
 2. Enter your Dexcom username and password, choose your region (United States, Outside United States, or Japan), and click **Save & Connect**.
 
+<p align="center">
+  <img width="440" src="docs/images/settings.png" alt="Tidebar Settings window with account, display, and general sections">
+</p>
+
 ## Troubleshooting
 
 When something is wrong, the menu bar shows `--- ?` and the menu's **Status** line explains why,
 followed by a code:
+
+<p align="center">
+  <img width="353" src="docs/images/menu-dropdown-unavailable.png" alt="Tidebar's menu showing --- ? and the status Network unavailable. (NET-01)">
+</p>
 
 | Code | Meaning | What to try |
 |---|---|---|
