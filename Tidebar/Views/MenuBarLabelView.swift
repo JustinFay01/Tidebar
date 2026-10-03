@@ -86,6 +86,8 @@ private struct MenuBarStatusRow: View {
             }
         }
         .font(textStyle.font)
+        // Without this the value truncates (`1… → 8m`) in the Settings preview when an age suffix is shown.
+        .fixedSize()
     }
 
     private var trendArrowImages: some View {
