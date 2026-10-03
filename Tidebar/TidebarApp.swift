@@ -23,8 +23,8 @@ struct TidebarApp: App {
         _debugSimulationController = State(initialValue: debugSimulationController)
         let glucoseMonitor = GlucoseMonitor(
             providerBuilder: {
-                if let simulatedProvider = debugSimulationController.makeSimulatedProviderIfActive() {
-                    return .success(simulatedProvider)
+                if let simulatedSetupResult = debugSimulationController.makeSimulatedProviderSetupResultIfActive() {
+                    return simulatedSetupResult
                 }
                 return Self.buildProviderFromSavedSettings(diagnosticEventLog: diagnosticEventLog)
             },

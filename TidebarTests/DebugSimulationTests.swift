@@ -32,7 +32,9 @@ struct DebugSimulationTests {
     }
 
     @Test func scenarioGroupsCoverEverythingExceptLiveData() {
-        let groupedScenarios = DebugSimulationScenario.errorScenarios + DebugSimulationScenario.readingScenarios
+        let groupedScenarios =
+            DebugSimulationScenario.errorScenarios + DebugSimulationScenario.setupScenarios
+            + DebugSimulationScenario.readingScenarios
         #expect(Set(groupedScenarios) == Set(DebugSimulationScenario.allCases).subtracting([.liveData]))
         #expect(groupedScenarios.count == Set(groupedScenarios).count)
     }
@@ -88,10 +90,7 @@ struct DebugSimulationTests {
         let debugSimulationController = DebugSimulationController()
         let monitor = GlucoseMonitor(
             providerBuilder: {
-                if let simulatedProvider = debugSimulationController.makeSimulatedProviderIfActive() {
-                    return .success(simulatedProvider)
-                }
-                return .failure(.missingConfiguration)
+                debugSimulationController.makeSimulatedProviderSetupResultIfActive() ?? .failure(.missingConfiguration)
             },
             sleepFunction: { _ in throw CancellationError() }
         )
@@ -102,6 +101,30 @@ struct DebugSimulationTests {
         debugSimulationController.selectScenario(.liveData, glucoseMonitor: monitor)
         #expect(monitor.providerDisplayName == nil)
         #expect(monitor.providerSetupError == .missingConfiguration)
+    }
+
+    @Test func keychainUnreadableUntilRetryRecoversToLiveDataOnTheNextBuild() async {
+        let debugSimulationController = DebugSimulationController()
+        let liveProvider = SimulatedGlucoseProvider(
+            simulationScenario: .currentReading,
+            simulatedLatency: .zero,
+            currentDateProvider: testClock.makeDateProvider()
+        )
+        let monitor = GlucoseMonitor(
+            providerBuilder: { debugSimulationController.makeSimulatedProviderSetupResultIfActive() ?? .success(liveProvider) },
+            currentDateProvider: testClock.makeDateProvider(),
+            sleepFunction: { _ in throw CancellationError() }
+        )
+
+        debugSimulationController.selectScenario(.keychainUnreadableUntilRetry, glucoseMonitor: monitor)
+        #expect(monitor.providerSetupError == DebugSimulationScenario.keychainUnreadableUntilRetry.simulatedSetupError)
+        #expect(await monitor.performFetch() == GlucoseFetchScheduler.providerSetupRetryInterval)
+
+        _ = await monitor.performFetch()
+
+        #expect(debugSimulationController.activeScenario == .liveData)
+        #expect(monitor.providerSetupError == nil)
+        #expect(monitor.latestReading != nil)
     }
 }
 #endif
