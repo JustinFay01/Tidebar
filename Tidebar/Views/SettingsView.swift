@@ -29,6 +29,7 @@ struct SettingsView: View {
             accountSection
             displaySection
             generalSection
+            versionFooterSection
         }
         .formStyle(.grouped)
         .frame(width: 440)
@@ -151,6 +152,18 @@ struct SettingsView: View {
         menuBarFontSizePoints = MenuBarTextStyle.defaultFontSizePoints
         menuBarFontWeight = MenuBarTextStyle.defaultFontWeight
         menuBarFontDesign = MenuBarTextStyle.defaultFontDesign
+    }
+
+    /// An empty section whose footer shows the version, centered at the bottom of the window.
+    private var versionFooterSection: some View {
+        Section {
+        } footer: {
+            Text(AppVersion.current.displayText)
+                .font(.footnote)
+                .foregroundStyle(.tint)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
     }
 
     private var generalSection: some View {

@@ -98,10 +98,10 @@ final class DiagnosticsReporter {
     }
 
     private static func currentEnvironment() -> DiagnosticsEnvironment {
-        let bundleInfo = Bundle.main.infoDictionary ?? [:]
+        let currentAppVersion = AppVersion.current
         return DiagnosticsEnvironment(
-            appVersion: bundleInfo["CFBundleShortVersionString"] as? String ?? "unknown",
-            appBuildNumber: bundleInfo["CFBundleVersion"] as? String ?? "unknown",
+            appVersion: currentAppVersion.marketingVersion,
+            appBuildNumber: currentAppVersion.buildNumber,
             buildConfiguration: currentBuildConfiguration,
             operatingSystemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
             hardwareArchitecture: currentHardwareArchitecture
