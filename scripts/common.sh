@@ -12,7 +12,9 @@ readonly DERIVED_DATA_PATH="${REPOSITORY_ROOT}/build/DerivedData"
 readonly SWIFT_SOURCE_DIRECTORIES=("${REPOSITORY_ROOT}/Tidebar" "${REPOSITORY_ROOT}/TidebarTests")
 
 # Ad-hoc signing ("Sign to Run Locally"), so builds work without the maintainer's Apple developer team.
-readonly AD_HOC_SIGNING_SETTINGS=(CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=)
+# The entitlements file is dropped because its keychain access group needs a provisioning profile;
+# the sandbox entitlements come from build settings and still apply.
+readonly AD_HOC_SIGNING_SETTINGS=(CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= CODE_SIGN_ENTITLEMENTS=)
 
 print_step() {
     printf '\n\033[1;34m==> %s\033[0m\n' "$1"

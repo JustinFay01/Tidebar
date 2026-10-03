@@ -16,7 +16,9 @@ nonisolated struct KeychainOperationError: Error, Equatable {
     let operationStatus: OSStatus
 }
 
-/// Stores a single generic password in the user's keychain.
+/// Stores a single generic password in the user's data protection keychain, not the legacy
+/// file-based login keychain. That needs the `keychain-access-groups` entitlement, which only a
+/// build signed with a development team can carry; ad-hoc builds fail with `errSecMissingEntitlement`.
 nonisolated struct KeychainPasswordStore: PasswordStore {
     static let dexcomSharePasswordStore = KeychainPasswordStore(
         serviceName: "com.jnfcorp.Tidebar.dexcom-share",
@@ -79,6 +81,7 @@ nonisolated struct KeychainPasswordStore: PasswordStore {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: accountName,
+            kSecUseDataProtectionKeychain as String: true,
         ]
     }
 }

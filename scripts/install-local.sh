@@ -6,8 +6,8 @@
 #   scripts/install-local.sh --ad-hoc            Sign ad hoc, if you don't have an Apple developer team.
 #   scripts/install-local.sh --destination DIR   Install into DIR instead of /Applications.
 #
-# Your own certificate gives the app a stable signature, so macOS doesn't ask for Keychain access
-# again after every reinstall. Ad-hoc signatures change with each build, so expect that prompt.
+# The Dexcom password is stored in the data protection keychain, which needs a build signed with
+# your certificate. An ad-hoc copy runs but can't save or read the password.
 
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
@@ -40,7 +40,8 @@ readonly INSTALLED_APPLICATION_PATH="${installationDirectory}/${XCODE_SCHEME}.ap
 
 build_release_application() {
     print_step "Building ${XCODE_SCHEME} (Release)"
-    local signingArguments=()
+    # The keychain access group needs a provisioning profile; let Xcode create or refresh it.
+    local signingArguments=(-allowProvisioningUpdates)
     if [[ "${shouldSignAdHoc}" == true ]]; then
         signingArguments=("${AD_HOC_SIGNING_SETTINGS[@]}")
     fi
