@@ -79,6 +79,7 @@ final class GlucoseMonitor {
     /// Incremented whenever the provider is replaced, so results from an older provider are discarded.
     @ObservationIgnored private var providerGeneration = 0
     @ObservationIgnored private var consecutiveFetchFailureCount = 0
+    @ObservationIgnored private var isProviderSetupRetryPending = false
     @ObservationIgnored private var pollingTask: Task<Void, Never>?
     @ObservationIgnored private var displayRefreshTask: Task<Void, Never>?
     @ObservationIgnored private var systemWakeObservationTask: Task<Void, Never>?
@@ -157,8 +158,12 @@ final class GlucoseMonitor {
     /// Performs one fetch and returns the delay before the next, or `nil` when polling should stop
     /// (no provider configured, or the fetch was cancelled).
     func performFetch() async -> TimeInterval? {
+        if isProviderSetupRetryPending {
+            isProviderSetupRetryPending = false
+            rebuildProvider()
+        }
         guard let glucoseProvider else {
-            return nil
+            return scheduleProviderSetupRetryIfRecoverable()
         }
         guard networkConnectivityMonitor.isNetworkAvailable else {
             return skipFetchWhileOffline()
@@ -196,6 +201,17 @@ final class GlucoseMonitor {
             diagnosticEventRecorder.record(.nextFetchScheduled(delaySeconds: Int(delayUntilNextFetch)))
             return delayUntilNextFetch
         }
+    }
+
+    /// A missing account or password needs the user, so polling stops. An unreadable password can
+    /// fix itself (the Keychain unlocks), so the provider is rebuilt on the next pass.
+    private func scheduleProviderSetupRetryIfRecoverable() -> TimeInterval? {
+        guard case .passwordUnreadable = providerSetupError else {
+            return nil
+        }
+        isProviderSetupRetryPending = true
+        diagnosticEventRecorder.record(.nextFetchScheduled(delaySeconds: Int(GlucoseFetchScheduler.providerSetupRetryInterval)))
+        return GlucoseFetchScheduler.providerSetupRetryInterval
     }
 
     /// Shows the network problem without contacting the provider. The connectivity observer fetches
@@ -236,6 +252,7 @@ final class GlucoseMonitor {
 
     private func rebuildProvider() {
         providerGeneration += 1
+        isProviderSetupRetryPending = false
         switch providerBuilder() {
         case .success(let builtProvider):
             glucoseProvider = builtProvider
