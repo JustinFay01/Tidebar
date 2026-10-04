@@ -170,10 +170,16 @@ struct SettingsView: View {
     private var generalSection: some View {
         Section("General") {
             Toggle("Launch at login", isOn: launchAtLoginBinding)
-            if let launchAtLoginMessage {
-                Text(launchAtLoginMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            HStack {
+                if let launchAtLoginMessage {
+                    Text(launchAtLoginMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Open Login Items…") {
+                    LaunchAtLoginController.openLoginItemsInSystemSettings()
+                }
             }
         }
     }
