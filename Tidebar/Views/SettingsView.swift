@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var draftRegion = DexcomShareRegion.unitedStates
     @State private var hasStoredPassword = false
     @State private var accountStatusMessage: String?
+    @State private var isAwaitingConnectionResult = false
     @State private var launchAtLoginMessage: String?
 
     var body: some View {
@@ -54,8 +55,8 @@ struct SettingsView: View {
                 }
             }
             HStack {
-                if let accountStatusMessage {
-                    Text(accountStatusMessage)
+                if let displayedAccountStatusMessage {
+                    Text(displayedAccountStatusMessage)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -169,10 +170,16 @@ struct SettingsView: View {
     private var generalSection: some View {
         Section("General") {
             Toggle("Launch at login", isOn: launchAtLoginBinding)
-            if let launchAtLoginMessage {
-                Text(launchAtLoginMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            HStack {
+                if let launchAtLoginMessage {
+                    Text(launchAtLoginMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Open Login Items…") {
+                    LaunchAtLoginController.openLoginItemsInSystemSettings()
+                }
             }
         }
     }
@@ -181,6 +188,17 @@ struct SettingsView: View {
 
     private var trimmedDraftUsername: String {
         draftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// After a save, follows the monitor until the first fetch with the new account succeeds or fails.
+    private var displayedAccountStatusMessage: String? {
+        guard isAwaitingConnectionResult else {
+            return accountStatusMessage
+        }
+        if let unavailableReason = glucoseMonitor.unavailableReason {
+            return unavailableReason
+        }
+        return glucoseMonitor.lastSuccessfulFetchDate == nil ? "Saved. Connecting…" : "Connected."
     }
 
     private var passwordPrompt: String {
@@ -195,7 +213,18 @@ struct SettingsView: View {
         draftUsername = savedUsername
         draftRegion = savedRegion
         draftPassword = ""
-        hasStoredPassword = Self.passwordExists(in: passwordStore)
+        refreshStoredPasswordState()
+    }
+
+    /// A failed Keychain read is reported instead of looking like no password was ever saved.
+    private func refreshStoredPasswordState() {
+        do {
+            hasStoredPassword = !(try passwordStore.readPassword() ?? "").isEmpty
+        } catch {
+            hasStoredPassword = false
+            isAwaitingConnectionResult = false
+            accountStatusMessage = "Couldn't read the password from Keychain."
+        }
     }
 
     /// Keeps the stored password when the field is left blank.
@@ -205,28 +234,33 @@ struct SettingsView: View {
                 try passwordStore.savePassword(draftPassword)
             } catch {
                 accountStatusMessage = "Couldn't save the password to Keychain."
+                isAwaitingConnectionResult = false
                 return
             }
         }
         savedUsername = trimmedDraftUsername
         savedRegion = draftRegion
         draftPassword = ""
-        hasStoredPassword = Self.passwordExists(in: passwordStore)
-        accountStatusMessage = "Saved. Connecting…"
+        accountStatusMessage = nil
+        isAwaitingConnectionResult = true
+        refreshStoredPasswordState()
         glucoseMonitor.rebuildProviderAndRefresh()
     }
 
+    /// Leaves the account in place when the password can't be deleted, so it isn't reported as removed.
     private func removeAccount() {
-        try? passwordStore.deletePassword()
+        do {
+            try passwordStore.deletePassword()
+        } catch {
+            accountStatusMessage = "Couldn't remove the password from Keychain."
+            isAwaitingConnectionResult = false
+            return
+        }
         savedUsername = ""
         loadAccountDrafts()
         accountStatusMessage = "Account removed."
+        isAwaitingConnectionResult = false
         glucoseMonitor.rebuildProviderAndRefresh()
-    }
-
-    private static func passwordExists(in passwordStore: any PasswordStore) -> Bool {
-        let storedPassword = try? passwordStore.readPassword()
-        return !(storedPassword ?? "").isEmpty
     }
 
     // MARK: - Launch at login

@@ -279,6 +279,33 @@ struct GlucoseMonitorTests {
         #expect(monitor.providerDisplayName == nil)
     }
 
+    @Test func unreadablePasswordRetriesProviderSetupAndRecovers() async {
+        let freshReading = makeReading(secondsBeforeReference: 60)
+        stubProvider.enqueue(.success(freshReading))
+        let unreadablePassword = GlucoseProviderSetupError.passwordUnreadable(
+            keychainFailure: KeychainOperationError(operationStatus: errSecInteractionNotAllowed)
+        )
+        var providerSetupResult: Result<any GlucoseProvider, GlucoseProviderSetupError> = .failure(unreadablePassword)
+        let monitor = GlucoseMonitor(
+            providerBuilder: { providerSetupResult },
+            currentDateProvider: testClock.makeDateProvider(),
+            sleepFunction: { _ in throw CancellationError() },
+            networkConnectivityMonitor: stubConnectivityMonitor
+        )
+        monitor.resetProviderAndReadings()
+
+        let retryDelay = await monitor.performFetch()
+        #expect(retryDelay == GlucoseFetchScheduler.providerSetupRetryInterval)
+        #expect(monitor.providerSetupError == unreadablePassword)
+
+        providerSetupResult = .success(stubProvider)
+        let nextDelay = await monitor.performFetch()
+
+        #expect(monitor.providerSetupError == nil)
+        #expect(monitor.displayState == .current(freshReading))
+        #expect(nextDelay == 255)
+    }
+
     @Test func successfulFetchShowsCurrentReadingAndSchedulesNextReading() async {
         let freshReading = makeReading(secondsBeforeReference: 60)
         stubProvider.enqueue(.success(freshReading))

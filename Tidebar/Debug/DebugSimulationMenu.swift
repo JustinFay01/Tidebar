@@ -6,7 +6,7 @@
 #if DEBUG
 import SwiftUI
 
-/// Debug-build-only submenu for simulating provider errors and reading states.
+/// Debug-build-only submenu for simulating provider errors, setup failures, and reading states.
 struct DebugSimulationMenu: View {
     let debugSimulationController: DebugSimulationController
     let glucoseMonitor: GlucoseMonitor
@@ -18,6 +18,9 @@ struct DebugSimulationMenu: View {
                     .tag(DebugSimulationScenario.liveData)
                 Section("Errors") {
                     scenarioOptions(DebugSimulationScenario.errorScenarios)
+                }
+                Section("Setup") {
+                    scenarioOptions(DebugSimulationScenario.setupScenarios)
                 }
                 Section("Readings") {
                     scenarioOptions(DebugSimulationScenario.readingScenarios)

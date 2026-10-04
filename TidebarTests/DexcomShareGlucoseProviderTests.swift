@@ -342,6 +342,24 @@ struct GlucoseProviderFactoryTests {
         }
     }
 
+    @Test func keychainReadFailureIsNotReportedAsMissingPassword() {
+        let missingEntitlementFailure = KeychainOperationError(operationStatus: errSecMissingEntitlement)
+        #expect(
+            GlucoseProviderSetupError.passwordUnreadable(keychainFailure: missingEntitlementFailure).userFacingDescription
+                == "Couldn't read your password from Keychain (OSStatus -34018). A required entitlement is not present."
+        )
+        #expect(throws: GlucoseProviderSetupError.passwordUnreadable(keychainFailure: missingEntitlementFailure)) {
+            try GlucoseProviderFactory.makeGlucoseProvider(
+                for: .dexcomShare(username: "share-user", region: .unitedStates),
+                passwordStore: InMemoryPasswordStore(
+                    storedPassword: "secret",
+                    readFailure: missingEntitlementFailure
+                ),
+                httpClient: StubHTTPClient()
+            )
+        }
+    }
+
     @Test func buildsDexcomShareProvider() throws {
         let glucoseProvider = try GlucoseProviderFactory.makeGlucoseProvider(
             for: .dexcomShare(username: "share-user", region: .unitedStates),

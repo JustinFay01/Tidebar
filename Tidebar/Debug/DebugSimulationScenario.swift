@@ -5,6 +5,7 @@
 
 #if DEBUG
 import Foundation
+import Security
 
 /// Situations the Debug menu can simulate without contacting any server.
 nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Sendable {
@@ -15,6 +16,9 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
     case noRecentReadings
     case accountLockedOrRateLimited
     case unexpectedResponse
+
+    case keychainUnreadable
+    case keychainUnreadableUntilRetry
 
     case currentReading
     case agingReading
@@ -31,6 +35,9 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
         .invalidCredentials, .networkUnavailable, .noRecentReadings, .accountLockedOrRateLimited, .unexpectedResponse,
     ]
 
+    /// Fail while building the provider, before any fetch, as a real Keychain failure would.
+    static let setupScenarios: [DebugSimulationScenario] = [.keychainUnreadable, .keychainUnreadableUntilRetry]
+
     static let readingScenarios: [DebugSimulationScenario] = [
         .currentReading, .agingReading, .staleReading, .doubleUpTrend, .doubleDownTrend, .indeterminateTrend,
     ]
@@ -45,6 +52,8 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
         case .noRecentReadings: "No Readings (Share Disabled)"
         case .accountLockedOrRateLimited: "Account Locked / Rate Limited"
         case .unexpectedResponse: "Unexpected Server Response"
+        case .keychainUnreadable: "Keychain Unreadable"
+        case .keychainUnreadableUntilRetry: "Keychain Unreadable, Then Recovers"
         case .currentReading: "Current Reading"
         case .agingReading: "Aging Reading (8 min)"
         case .staleReading: "Stale Reading (20 min)"
@@ -54,10 +63,22 @@ nonisolated enum DebugSimulationScenario: String, CaseIterable, Identifiable, Se
         }
     }
 
-    /// The fetch result this scenario produces, or `nil` for live data.
+    /// The setup failure this scenario produces instead of a provider, or `nil` when a provider is built.
+    /// Uses the status a locked keychain returns.
+    var simulatedSetupError: GlucoseProviderSetupError? {
+        switch self {
+        case .keychainUnreadable, .keychainUnreadableUntilRetry:
+            .passwordUnreadable(keychainFailure: KeychainOperationError(operationStatus: errSecInteractionNotAllowed))
+        default:
+            nil
+        }
+    }
+
+    /// The fetch result this scenario produces, or `nil` for live data and for setup scenarios,
+    /// which never get as far as a fetch.
     func simulatedOutcome(at currentDate: Date) -> Result<GlucoseReading, GlucoseProviderError>? {
         switch self {
-        case .liveData:
+        case .liveData, .keychainUnreadable, .keychainUnreadableUntilRetry:
             return nil
         case .invalidCredentials:
             return .failure(.invalidCredentials)

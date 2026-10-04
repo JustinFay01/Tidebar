@@ -15,6 +15,8 @@ nonisolated enum GlucoseFetchScheduler {
     static let maximumFailureRetryInterval: TimeInterval = 5 * 60
     /// How often connectivity is re-checked while offline, in case the restoration notification never arrives.
     static let offlineRecheckInterval: TimeInterval = 60
+    /// How often the provider is rebuilt while the saved password can't be read from the Keychain.
+    static let providerSetupRetryInterval: TimeInterval = 60
 
     /// Waits until the next reading is expected; if it is already overdue, polls every minute.
     static func delayAfterSuccessfulFetch(latestReadingTimestamp: Date, currentDate: Date) -> TimeInterval {

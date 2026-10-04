@@ -123,13 +123,18 @@ final class StubNetworkConnectivityMonitor: NetworkConnectivityMonitoring {
 
 final class InMemoryPasswordStore: PasswordStore {
     private let lockedPassword: OSAllocatedUnfairLock<String?>
+    private let readFailure: KeychainOperationError?
 
-    init(storedPassword: String? = nil) {
+    init(storedPassword: String? = nil, readFailure: KeychainOperationError? = nil) {
         lockedPassword = OSAllocatedUnfairLock(initialState: storedPassword)
+        self.readFailure = readFailure
     }
 
     func readPassword() throws -> String? {
-        lockedPassword.withLock { $0 }
+        if let readFailure {
+            throw readFailure
+        }
+        return lockedPassword.withLock { $0 }
     }
 
     func savePassword(_ password: String) throws {

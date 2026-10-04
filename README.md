@@ -95,6 +95,7 @@ followed by a code:
 | `DATA-02` | Latest reading is over 12 minutes old | Check that your phone has signal and the Dexcom app is uploading. |
 | `SRV-01` | Unexpected response from Dexcom | Usually temporary. If it persists, Dexcom may have changed the API; please report it. |
 | `SETUP-01` / `SETUP-02` | No account or password saved | Open **Settings…** and enter your Dexcom account. |
+| `SETUP-03` | Keychain wouldn't return the saved password | Quit and reopen Tidebar. If it persists, re-enter the password in **Settings…**; ad-hoc signed builds can't use the Keychain. |
 
 ### Reporting a problem
 

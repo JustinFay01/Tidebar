@@ -17,6 +17,7 @@ nonisolated enum TidebarDiagnosticCode: String, CaseIterable, Sendable {
     case unexpectedServerResponse = "SRV-01"
     case accountNotConfigured = "SETUP-01"
     case passwordMissing = "SETUP-02"
+    case passwordUnreadable = "SETUP-03"
 
     /// One-line meaning, used in diagnostics reports.
     var summary: String {
@@ -29,6 +30,7 @@ nonisolated enum TidebarDiagnosticCode: String, CaseIterable, Sendable {
         case .unexpectedServerResponse: "Dexcom returned an error or a response Tidebar didn't understand"
         case .accountNotConfigured: "No Dexcom account set up"
         case .passwordMissing: "No password saved"
+        case .passwordUnreadable: "Keychain refused to return the saved password"
         }
     }
 
@@ -60,6 +62,7 @@ extension GlucoseProviderSetupError {
         switch self {
         case .missingConfiguration: .accountNotConfigured
         case .missingPassword: .passwordMissing
+        case .passwordUnreadable: .passwordUnreadable
         }
     }
 

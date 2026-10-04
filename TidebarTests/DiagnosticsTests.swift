@@ -32,6 +32,7 @@ struct TidebarDiagnosticCodeTests {
     @Test(arguments: [
         (GlucoseProviderSetupError.missingConfiguration, "SETUP-01"),
         (.missingPassword, "SETUP-02"),
+        (.passwordUnreadable(keychainFailure: KeychainOperationError(operationStatus: errSecMissingEntitlement)), "SETUP-03"),
     ])
     func setupErrorsMapToStableCodes(setupError: GlucoseProviderSetupError, expectedCode: String) {
         #expect(setupError.diagnosticCode.rawValue == expectedCode)

@@ -17,6 +17,11 @@ enum LaunchAtLoginController {
         SMAppService.mainApp.status == .requiresApproval
     }
 
+    /// Opens System Settings › General › Login Items, where the user can also turn Tidebar on or off.
+    static func openLoginItemsInSystemSettings() {
+        SMAppService.openSystemSettingsLoginItems()
+    }
+
     static func setLaunchAtLoginEnabled(_ shouldLaunchAtLogin: Bool) throws {
         if shouldLaunchAtLogin {
             try SMAppService.mainApp.register()

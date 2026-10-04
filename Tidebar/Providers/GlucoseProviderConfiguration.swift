@@ -26,11 +26,19 @@ nonisolated enum GlucoseProviderConfiguration: Equatable, Sendable {
 nonisolated enum GlucoseProviderSetupError: Error, Equatable {
     case missingConfiguration
     case missingPassword
+    /// The password may exist, but reading it failed. `keychainFailure` carries the Security framework
+    /// status (see `KeychainOperationError` for what the codes mean); it is `nil` only when a
+    /// `PasswordStore` other than the Keychain one threw some other error.
+    case passwordUnreadable(keychainFailure: KeychainOperationError?)
 
     var userFacingDescription: String {
         switch self {
         case .missingConfiguration: "Add your Dexcom account in Settings."
         case .missingPassword: "Enter your Dexcom password in Settings."
+        case .passwordUnreadable(let keychainFailure?):
+            "Couldn't read your password from Keychain (OSStatus \(keychainFailure.operationStatus))."
+                + (keychainFailure.statusDescription.map { " \($0)" } ?? "")
+        case .passwordUnreadable(nil): "Couldn't read your password from Keychain."
         }
     }
 }
@@ -44,7 +52,12 @@ nonisolated enum GlucoseProviderFactory {
     ) throws(GlucoseProviderSetupError) -> any GlucoseProvider {
         switch configuration {
         case .dexcomShare(let username, let region):
-            let storedPassword = try? passwordStore.readPassword()
+            let storedPassword: String?
+            do {
+                storedPassword = try passwordStore.readPassword()
+            } catch {
+                throw .passwordUnreadable(keychainFailure: error as? KeychainOperationError)
+            }
             guard let storedPassword, !storedPassword.isEmpty else {
                 throw .missingPassword
             }
