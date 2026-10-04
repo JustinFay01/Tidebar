@@ -241,8 +241,15 @@ struct SettingsView: View {
         glucoseMonitor.rebuildProviderAndRefresh()
     }
 
+    /// Leaves the account in place when the password can't be deleted, so it isn't reported as removed.
     private func removeAccount() {
-        try? passwordStore.deletePassword()
+        do {
+            try passwordStore.deletePassword()
+        } catch {
+            accountStatusMessage = "Couldn't remove the password from Keychain."
+            isAwaitingConnectionResult = false
+            return
+        }
         savedUsername = ""
         loadAccountDrafts()
         accountStatusMessage = "Account removed."
