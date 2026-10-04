@@ -99,9 +99,24 @@ struct MenuBarContentView: View {
         }
     }
 
-    /// Menu bar apps are not frontmost, so activate first or the Settings window opens behind other apps.
+    /// Menu bar apps are not frontmost, so the Settings window would open behind other apps.
+    /// Plain `activate()` is only a request the system can decline, so force activation and raise the window.
     private func openSettingsInForeground() {
-        NSApplication.shared.activate()
+        NSApplication.shared.activate(ignoringOtherApps: true)
         openSettings()
+        // The window is created or shown after this action returns.
+        DispatchQueue.main.async {
+            for settingsWindow in NSApplication.shared.windows where Self.isSettingsWindow(settingsWindow) {
+                settingsWindow.makeKeyAndOrderFront(nil)
+                settingsWindow.orderFrontRegardless()
+            }
+        }
     }
+
+    private static func isSettingsWindow(_ window: NSWindow) -> Bool {
+        window.identifier?.rawValue == settingsWindowIdentifier
+    }
+
+    /// The identifier SwiftUI gives the `Settings` scene's window.
+    private static let settingsWindowIdentifier = "com_apple_SwiftUI_Settings_window"
 }
