@@ -17,7 +17,8 @@ final class GlucoseMonitor {
     /// How often the display state is re-evaluated so readings age without waiting for a fetch.
     static let displayRefreshInterval: TimeInterval = 15
 
-    private(set) var latestReading: GlucoseReading?
+    private(set) var currentReading: GlucoseReading?
+    private(set) var previousReading: GlucoseReading?
     private(set) var lastFetchError: GlucoseProviderError?
     private(set) var providerSetupError: GlucoseProviderSetupError?
     private(set) var providerDisplayName: String?
@@ -42,7 +43,7 @@ final class GlucoseMonitor {
         if let lastFetchError {
             return lastFetchError.diagnosticCode
         }
-        if let latestReading, GlucoseReadingFreshness.isStale(latestReading, at: displayEvaluationDate) {
+        if let currentReading, GlucoseReadingFreshness.isStale(currentReading, at: displayEvaluationDate) {
             return .readingStale
         }
         return nil
@@ -55,7 +56,7 @@ final class GlucoseMonitor {
             displayStateKind: GlucoseMonitorDiagnosticsStatus.DisplayStateKind(displayState),
             currentDiagnosticCode: currentDiagnosticCode,
             providerDisplayName: providerDisplayName,
-            latestReadingAgeSeconds: latestReading.map { Int(GlucoseReadingFreshness.readingAge(of: $0, at: currentDate)) },
+            latestReadingAgeSeconds: currentReading.map { Int(GlucoseReadingFreshness.readingAge(of: $0, at: currentDate)) },
             secondsSinceLastSuccessfulFetch: lastSuccessfulFetchDate.map { Int(currentDate.timeIntervalSince($0)) },
             consecutiveFetchFailureCount: consecutiveFetchFailureCount,
             isFetchInProgress: isFetchInProgress
@@ -64,7 +65,8 @@ final class GlucoseMonitor {
 
     var displayState: GlucoseDisplayState {
         GlucoseReadingFreshness.classifyDisplayState(
-            latestReading: latestReading,
+            latestReading: currentReading,
+            previousReading: previousReading,
             unavailableReason: unavailableReason,
             currentDate: displayEvaluationDate
         )
@@ -143,7 +145,8 @@ final class GlucoseMonitor {
     /// Tests use this to drive `performFetch()` directly, without a background fetch racing them.
     func resetProviderAndReadings() {
         rebuildProvider()
-        latestReading = nil
+        currentReading = nil
+        previousReading = nil
         lastFetchError = nil
         lastSuccessfulFetchDate = nil
         consecutiveFetchFailureCount = 0
@@ -226,7 +229,11 @@ final class GlucoseMonitor {
     private func recordSuccessfulFetch(_ fetchedReading: GlucoseReading) {
         let readingAgeSeconds = GlucoseReadingFreshness.readingAge(of: fetchedReading, at: currentDateProvider())
         diagnosticEventRecorder.record(.fetchSucceeded(readingAgeSeconds: Int(readingAgeSeconds)))
-        latestReading = fetchedReading
+        // A retry while waiting for the next reading returns the same one again; keep the reading before it.
+        if fetchedReading != currentReading {
+            previousReading = currentReading
+        }
+        currentReading = fetchedReading
         lastFetchError = nil
         consecutiveFetchFailureCount = 0
         lastSuccessfulFetchDate = currentDateProvider()

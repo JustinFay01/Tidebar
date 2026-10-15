@@ -7,8 +7,35 @@ import Foundation
 
 nonisolated enum GlucoseDisplayState: Equatable, Sendable {
     case unknown(reason: String)
-    case current(GlucoseReading)
-    case aging(GlucoseReading)
+    case current(DisplayedReadings)
+    case aging(DisplayedReadings)
+}
+
+/// The reading being shown, plus the one fetched before it so the menu bar can show the change.
+nonisolated struct DisplayedReadings: Equatable, Sendable {
+    /// One sensor interval plus slack for late publication. A wider gap means readings were missed,
+    /// so the change would span an unknown stretch of time.
+    static let maximumComparableIntervalSeconds: TimeInterval = GlucoseFetchScheduler.sensorReadingInterval * 1.5
+
+    let currentReading: GlucoseReading
+    let previousReading: GlucoseReading?
+
+    var differenceMgPerDeciliter: Int? {
+        Self.differenceMgPerDeciliter(from: previousReading, to: currentReading)
+    }
+
+    /// Signed change in mg/dL from the previous reading, or `nil` when there is no previous reading
+    /// or it is not the one immediately before the current reading.
+    static func differenceMgPerDeciliter(from previousReading: GlucoseReading?, to currentReading: GlucoseReading) -> Int? {
+        guard let previousReading else {
+            return nil
+        }
+        let intervalSeconds = currentReading.readingTimestamp.timeIntervalSince(previousReading.readingTimestamp)
+        guard intervalSeconds > 0, intervalSeconds <= maximumComparableIntervalSeconds else {
+            return nil
+        }
+        return currentReading.valueMgPerDeciliter - previousReading.valueMgPerDeciliter
+    }
 }
 
 /// Decides whether a reading is fresh enough to show.
@@ -24,6 +51,7 @@ nonisolated enum GlucoseReadingFreshness {
     ///   either makes the state unknown regardless of any earlier reading.
     static func classifyDisplayState(
         latestReading: GlucoseReading?,
+        previousReading: GlucoseReading?,
         unavailableReason: String?,
         currentDate: Date
     ) -> GlucoseDisplayState {
@@ -37,10 +65,11 @@ nonisolated enum GlucoseReadingFreshness {
         if isStale(latestReading, at: currentDate) {
             return .unknown(reason: staleReadingReason(readingAgeSeconds: readingAgeSeconds))
         }
+        let readings = DisplayedReadings(currentReading: latestReading, previousReading: previousReading)
         if readingAgeSeconds >= agingThresholdSeconds {
-            return .aging(latestReading)
+            return .aging(readings)
         }
-        return .current(latestReading)
+        return .current(readings)
     }
 
     static func isStale(_ glucoseReading: GlucoseReading, at currentDate: Date) -> Bool {

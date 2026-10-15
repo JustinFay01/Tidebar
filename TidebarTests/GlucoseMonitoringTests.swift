@@ -77,13 +77,14 @@ struct GlucoseReadingFreshnessTests {
 
         let displayState = GlucoseReadingFreshness.classifyDisplayState(
             latestReading: latestReading,
+            previousReading: nil,
             unavailableReason: nil,
             currentDate: referenceDate
         )
 
         switch (displayState, expectedDisplayKind) {
-        case (.current(let shownReading), .current), (.aging(let shownReading), .aging):
-            #expect(shownReading == latestReading)
+        case (.current(let shownReadings), .current), (.aging(let shownReadings), .aging):
+            #expect(shownReadings.currentReading == latestReading)
         case (.unknown(let reason), .unknown):
             #expect(reason.contains("min ago"))
         default:
@@ -94,15 +95,31 @@ struct GlucoseReadingFreshnessTests {
     @Test func unknownWithoutAnyReading() {
         let displayState = GlucoseReadingFreshness.classifyDisplayState(
             latestReading: nil,
+            previousReading: nil,
             unavailableReason: nil,
             currentDate: referenceDate
         )
         #expect(displayState == .unknown(reason: GlucoseReadingFreshness.awaitingFirstReadingReason))
     }
 
+    @Test func keepsThePreviousReadingAlongsideTheCurrentOne() {
+        let currentReading = makeReading(secondsBeforeReference: 60)
+        let previousReading = makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: 104)
+
+        let displayState = GlucoseReadingFreshness.classifyDisplayState(
+            latestReading: currentReading,
+            previousReading: previousReading,
+            unavailableReason: nil,
+            currentDate: referenceDate
+        )
+
+        #expect(displayState == .current(DisplayedReadings(currentReading: currentReading, previousReading: previousReading)))
+    }
+
     @Test func unavailableReasonWinsOverFreshReading() {
         let displayState = GlucoseReadingFreshness.classifyDisplayState(
             latestReading: makeReading(secondsBeforeReference: 30),
+            previousReading: nil,
             unavailableReason: "Network unavailable.",
             currentDate: referenceDate
         )
@@ -148,6 +165,38 @@ struct GlucoseFetchSchedulerTests {
 
 // MARK: - Formatting
 
+struct DisplayedReadingsTests {
+    @Test(
+        arguments: [
+            (300.0, 104, 8),
+            (300.0, 120, -8),
+            (300.0, 112, 0),
+            (450.0, 104, 8),
+            (451.0, 104, nil),
+            (600.0, 104, nil),
+            (0.0, 104, nil),
+        ] as [(TimeInterval, Int, Int?)])
+    func differenceOnlyBetweenConsecutiveReadings(
+        previousReadingSecondsBeforeCurrent: TimeInterval,
+        previousValueMgPerDeciliter: Int,
+        expectedDifferenceMgPerDeciliter: Int?
+    ) {
+        let currentReading = makeReading(secondsBeforeReference: 0)
+        let previousReading = makeReading(
+            secondsBeforeReference: previousReadingSecondsBeforeCurrent,
+            valueMgPerDeciliter: previousValueMgPerDeciliter
+        )
+
+        let differenceMgPerDeciliter = DisplayedReadings.differenceMgPerDeciliter(from: previousReading, to: currentReading)
+
+        #expect(differenceMgPerDeciliter == expectedDifferenceMgPerDeciliter)
+    }
+
+    @Test func noDifferenceWithoutAPreviousReading() {
+        #expect(DisplayedReadings.differenceMgPerDeciliter(from: nil, to: makeReading(secondsBeforeReference: 0)) == nil)
+    }
+}
+
 struct GlucoseStatusFormatterTests {
     static let englishLocale = Locale(identifier: "en_US")
 
@@ -166,9 +215,14 @@ struct GlucoseStatusFormatterTests {
         ] as [(TrendDirection, [String])])
     func formatsCurrentReadingWithTrendSymbols(trendDirection: TrendDirection, expectedSymbolNames: [String]) {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
-            for: .current(makeReading(secondsBeforeReference: 60, trendDirection: trendDirection)),
+            for: .current(
+                DisplayedReadings(
+                    currentReading: makeReading(secondsBeforeReference: 60, trendDirection: trendDirection),
+                    previousReading: nil
+                )),
             glucoseUnit: .milligramsPerDeciliter,
             currentDate: referenceDate,
+            showsDifference: true,
             locale: Self.englishLocale
         )
         #expect(
@@ -176,19 +230,144 @@ struct GlucoseStatusFormatterTests {
                 == GlucoseStatusFormatter.MenuBarStatusContent(
                     valueText: "112",
                     trendSymbolNames: expectedSymbolNames,
+                    differenceContent: nil,
                     ageSuffixText: nil,
                     isDimmed: false
                 ))
     }
 
     @Test func reservesWidthForEverySingleArrowButNotDoubles() {
-        let widthReservingContents = GlucoseStatusFormatter.widthReservingContents(for: .milligramsPerDeciliter)
+        let widthReservingContents = GlucoseStatusFormatter.widthReservingContents(for: .milligramsPerDeciliter, isDifferenceShown: false)
 
         #expect(
             widthReservingContents.map(\.trendSymbolNames) == [
                 ["arrow.up"], ["arrow.up.right"], ["arrow.right"], ["arrow.down.right"], ["arrow.down"], ["questionmark"],
             ])
-        #expect(widthReservingContents.allSatisfy { $0.valueText == "000" && $0.ageSuffixText == nil })
+        #expect(
+            widthReservingContents.allSatisfy {
+                $0.valueText == "000" && $0.differenceContent == nil && $0.ageSuffixText == nil
+            })
+    }
+
+    @Test func reservesWidthForTheDifferenceOnlyWhileOneIsShown() {
+        let widthReservingContents = GlucoseStatusFormatter.widthReservingContents(for: .milligramsPerDeciliter, isDifferenceShown: true)
+
+        #expect(
+            widthReservingContents.allSatisfy {
+                $0.differenceContent == GlucoseStatusFormatter.DifferenceContent(signSymbolName: "plus", magnitudeText: "00")
+            })
+    }
+
+    @Test(arguments: [
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 104, "plus", "8"),
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 120, "minus", "8"),
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 112, "plusminus", "0"),
+        (GlucoseUnit.millimolesPerLiter, "en_US", 120, "minus", "0.4"),
+        (GlucoseUnit.millimolesPerLiter, "de_DE", 120, "minus", "0,4"),
+    ])
+    func formatsDifferenceAsSignSymbolAndUnsignedAmount(
+        glucoseUnit: GlucoseUnit,
+        localeIdentifier: String,
+        previousValueMgPerDeciliter: Int,
+        expectedSignSymbolName: String,
+        expectedMagnitudeText: String
+    ) {
+        let readings = DisplayedReadings(
+            currentReading: makeReading(secondsBeforeReference: 60),
+            previousReading: makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: previousValueMgPerDeciliter)
+        )
+
+        let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
+            for: .current(readings),
+            glucoseUnit: glucoseUnit,
+            currentDate: referenceDate,
+            showsDifference: true,
+            locale: Locale(identifier: localeIdentifier)
+        )
+
+        #expect(
+            statusContent.differenceContent
+                == GlucoseStatusFormatter.DifferenceContent(
+                    signSymbolName: expectedSignSymbolName,
+                    magnitudeText: expectedMagnitudeText
+                ))
+    }
+
+    @Test(arguments: [-1, 0, 1])
+    func everyDifferenceSignSymbolExistsOnThisSystem(differenceMgPerDeciliter: Int) {
+        let signSymbolName = GlucoseStatusFormatter.differenceSignSymbolName(for: differenceMgPerDeciliter)
+        #expect(NSImage(systemSymbolName: signSymbolName, accessibilityDescription: nil) != nil)
+    }
+
+    @Test(arguments: [
+        (104, "Glucose 112 mg/dL, Steady, up 8 since the last reading"),
+        (120, "Glucose 112 mg/dL, Steady, down 8 since the last reading"),
+        (112, "Glucose 112 mg/dL, Steady, no change since the last reading"),
+    ])
+    func speaksDifferenceInWords(previousValueMgPerDeciliter: Int, expectedDescription: String) {
+        let readings = DisplayedReadings(
+            currentReading: makeReading(secondsBeforeReference: 60),
+            previousReading: makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: previousValueMgPerDeciliter)
+        )
+
+        let accessibilityDescription = GlucoseStatusFormatter.accessibilityDescription(
+            for: .current(readings),
+            glucoseUnit: .milligramsPerDeciliter,
+            showsDifference: true,
+            locale: Self.englishLocale
+        )
+
+        #expect(accessibilityDescription == expectedDescription)
+    }
+
+    @Test func leavesOutTheDifferenceWhenTurnedOffForTheMenuBar() {
+        let readings = DisplayedReadings(
+            currentReading: makeReading(secondsBeforeReference: 60),
+            previousReading: makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: 104)
+        )
+
+        let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
+            for: .current(readings),
+            glucoseUnit: .milligramsPerDeciliter,
+            currentDate: referenceDate,
+            showsDifference: false,
+            locale: Self.englishLocale
+        )
+        let accessibilityDescription = GlucoseStatusFormatter.accessibilityDescription(
+            for: .current(readings),
+            glucoseUnit: .milligramsPerDeciliter,
+            showsDifference: false,
+            locale: Self.englishLocale
+        )
+
+        #expect(statusContent.differenceContent == nil)
+        #expect(accessibilityDescription == "Glucose 112 mg/dL, Steady")
+    }
+
+    @Test(arguments: [
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 104, "+8"),
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 120, "\u{2212}8"),
+        (GlucoseUnit.milligramsPerDeciliter, "en_US", 112, "\u{00B1}0"),
+        (GlucoseUnit.millimolesPerLiter, "de_DE", 120, "\u{2212}0,4"),
+    ])
+    func formatsPlainTextDifferenceForTheDropdown(
+        glucoseUnit: GlucoseUnit,
+        localeIdentifier: String,
+        previousValueMgPerDeciliter: Int,
+        expectedText: String
+    ) {
+        let readings = DisplayedReadings(
+            currentReading: makeReading(secondsBeforeReference: 60),
+            previousReading: makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: previousValueMgPerDeciliter)
+        )
+
+        let differenceText = GlucoseStatusFormatter.differencePlainText(
+            for: readings,
+            glucoseUnit: glucoseUnit,
+            locale: Locale(identifier: localeIdentifier)
+        )
+
+        #expect(differenceText == expectedText)
     }
 
     @Test(arguments: TrendDirection.allCases)
@@ -205,9 +384,10 @@ struct GlucoseStatusFormatterTests {
     ])
     func formatsAgingReadingDimmedWithAgeSuffix(glucoseUnit: GlucoseUnit, localeIdentifier: String, expectedValueText: String) {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
-            for: .aging(makeReading(secondsBeforeReference: 510)),
+            for: .aging(DisplayedReadings(currentReading: makeReading(secondsBeforeReference: 510), previousReading: nil)),
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
+            showsDifference: true,
             locale: Locale(identifier: localeIdentifier)
         )
         #expect(
@@ -215,6 +395,7 @@ struct GlucoseStatusFormatterTests {
                 == GlucoseStatusFormatter.MenuBarStatusContent(
                     valueText: expectedValueText,
                     trendSymbolNames: ["arrow.right"],
+                    differenceContent: nil,
                     ageSuffixText: "8m",
                     isDimmed: true
                 ))
@@ -225,7 +406,8 @@ struct GlucoseStatusFormatterTests {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
             for: .unknown(reason: "anything"),
             glucoseUnit: glucoseUnit,
-            currentDate: referenceDate
+            currentDate: referenceDate,
+            showsDifference: true
         )
         #expect(statusContent.valueText == "---")
         #expect(statusContent.trendSymbolNames == ["questionmark"])
@@ -302,7 +484,7 @@ struct GlucoseMonitorTests {
         let nextDelay = await monitor.performFetch()
 
         #expect(monitor.providerSetupError == nil)
-        #expect(monitor.displayState == .current(freshReading))
+        #expect(monitor.displayState == .current(DisplayedReadings(currentReading: freshReading, previousReading: nil)))
         #expect(nextDelay == 255)
     }
 
@@ -313,7 +495,7 @@ struct GlucoseMonitorTests {
 
         let nextDelay = await monitor.performFetch()
 
-        #expect(monitor.displayState == .current(freshReading))
+        #expect(monitor.displayState == .current(DisplayedReadings(currentReading: freshReading, previousReading: nil)))
         #expect(monitor.providerDisplayName == "Stub Provider")
         #expect(nextDelay == 255)
     }
@@ -326,7 +508,7 @@ struct GlucoseMonitorTests {
 
         testClock.advance(bySeconds: 6 * 60)
         monitor.updateDisplayEvaluationDate()
-        #expect(monitor.displayState == .aging(freshReading))
+        #expect(monitor.displayState == .aging(DisplayedReadings(currentReading: freshReading, previousReading: nil)))
 
         testClock.advance(bySeconds: 6 * 60)
         monitor.updateDisplayEvaluationDate()
@@ -349,6 +531,35 @@ struct GlucoseMonitorTests {
         #expect(nextDelay == GlucoseFetchScheduler.awaitingNewReadingRetryInterval)
     }
 
+    @Test func newReadingKeepsTheReadingBeforeIt() async {
+        let earlierReading = makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: 104)
+        let newerReading = makeReading(secondsBeforeReference: 60)
+        stubProvider.enqueue(.success(earlierReading))
+        stubProvider.enqueue(.success(newerReading))
+        let monitor = makeMonitor()
+
+        _ = await monitor.performFetch()
+        _ = await monitor.performFetch()
+
+        #expect(monitor.displayState == .current(DisplayedReadings(currentReading: newerReading, previousReading: earlierReading)))
+    }
+
+    @Test func sameReadingAgainKeepsTheReadingBeforeIt() async {
+        let earlierReading = makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: 104)
+        let newerReading = makeReading(secondsBeforeReference: 60)
+        stubProvider.enqueue(.success(earlierReading))
+        stubProvider.enqueue(.success(newerReading))
+        stubProvider.enqueue(.success(newerReading))
+        let monitor = makeMonitor()
+
+        _ = await monitor.performFetch()
+        _ = await monitor.performFetch()
+        _ = await monitor.performFetch()
+
+        #expect(monitor.previousReading == earlierReading)
+        #expect(monitor.currentReading == newerReading)
+    }
+
     @Test func failuresShowUnknownAndBackOff() async {
         stubProvider.enqueue(.success(makeReading(secondsBeforeReference: 30)))
         stubProvider.enqueue(.failure(GlucoseProviderError.networkUnavailable))
@@ -360,7 +571,7 @@ struct GlucoseMonitorTests {
         let secondFailureDelay = await monitor.performFetch()
 
         #expect(monitor.displayState == .unknown(reason: GlucoseProviderError.networkUnavailable.statusMessage))
-        #expect(monitor.latestReading != nil)
+        #expect(monitor.currentReading != nil)
         #expect(firstFailureDelay == 15)
         #expect(secondFailureDelay == 30)
     }
@@ -376,7 +587,7 @@ struct GlucoseMonitorTests {
         _ = await monitor.performFetch()
 
         #expect(monitor.lastFetchError == nil)
-        #expect(monitor.displayState == .current(recoveredReading))
+        #expect(monitor.displayState == .current(DisplayedReadings(currentReading: recoveredReading, previousReading: nil)))
     }
 
     @Test func nonProviderErrorsAreNormalized() async {
@@ -424,9 +635,9 @@ struct GlucoseMonitorTests {
 
         stubConnectivityMonitor.setNetworkAvailable(true)
 
-        try await waitUntil { monitor.latestReading != nil }
+        try await waitUntil { monitor.currentReading != nil }
         #expect(stubProvider.fetchCount == 1)
-        #expect(monitor.displayState == .current(restoredReading))
+        #expect(monitor.displayState == .current(DisplayedReadings(currentReading: restoredReading, previousReading: nil)))
     }
 
     @Test func networkLossAloneDoesNotFetch() async throws {
@@ -434,7 +645,7 @@ struct GlucoseMonitorTests {
         let monitor = makeMonitor()
         monitor.start()
         defer { monitor.stop() }
-        try await waitUntil { monitor.latestReading != nil }
+        try await waitUntil { monitor.currentReading != nil }
 
         stubConnectivityMonitor.setNetworkAvailable(false)
         try await Task.sleep(for: .milliseconds(50))
@@ -452,13 +663,17 @@ struct GlucoseMonitorTests {
     }
 
     @Test func applyingNewSettingsClearsPreviousReading() async {
+        stubProvider.enqueue(.success(makeReading(secondsBeforeReference: 330)))
         stubProvider.enqueue(.success(makeReading(secondsBeforeReference: 30)))
         let monitor = makeMonitor()
         _ = await monitor.performFetch()
+        _ = await monitor.performFetch()
+        #expect(monitor.previousReading != nil)
 
         monitor.resetProviderAndReadings()
 
-        #expect(monitor.latestReading == nil)
+        #expect(monitor.currentReading == nil)
+        #expect(monitor.previousReading == nil)
         #expect(monitor.displayState == .unknown(reason: GlucoseReadingFreshness.awaitingFirstReadingReason))
     }
 }

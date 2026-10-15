@@ -387,7 +387,7 @@ struct DiagnosticsRedactionTests {
         )
         monitor.resetProviderAndReadings()
         _ = await monitor.performFetch()
-        #expect(monitor.latestReading?.valueMgPerDeciliter == Self.distinctiveGlucoseValue)
+        #expect(monitor.currentReading?.valueMgPerDeciliter == Self.distinctiveGlucoseValue)
 
         return DiagnosticsReportBuilder.buildReport(
             from: DiagnosticsReportInput(

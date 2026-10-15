@@ -29,6 +29,14 @@ nonisolated enum GlucoseUnit: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Widest typical unsigned change between readings in this unit, used to reserve width while a change is shown.
+    var widestTypicalDifferencePlaceholder: String {
+        switch self {
+        case .milligramsPerDeciliter: "00"
+        case .millimolesPerLiter: "0.0"
+        }
+    }
+
     static func convertToMillimolesPerLiter(valueMgPerDeciliter: Int) -> Double {
         Double(valueMgPerDeciliter) / milligramsPerDeciliterPerMillimolePerLiter
     }

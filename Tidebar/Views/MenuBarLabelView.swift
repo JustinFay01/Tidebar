@@ -6,8 +6,8 @@
 import AppKit
 import SwiftUI
 
-/// The status item: value and SF Symbol trend arrow, e.g. `112 →`, dimmed with an age suffix
-/// when aging, `--- ?` when unknown.
+/// The status item: value, SF Symbol trend arrow, and change since the previous reading, e.g. `112 → ⊕4`,
+/// dimmed with an age suffix when aging, `--- ?` when unknown.
 ///
 /// `MenuBarExtra` labels ignore most layout modifiers, so the content is rendered into a template image.
 /// That keeps the monospaced digits, the reserved width, and the dimming, and still tints correctly
@@ -19,22 +19,33 @@ struct MenuBarLabelView: View {
     @AppStorage(AppSettingsKeys.menuBarFontSizePoints) private var fontSizePoints = MenuBarTextStyle.defaultFontSizePoints
     @AppStorage(AppSettingsKeys.menuBarFontWeight) private var fontWeight = MenuBarTextStyle.defaultFontWeight
     @AppStorage(AppSettingsKeys.menuBarFontDesign) private var fontDesign = MenuBarTextStyle.defaultFontDesign
+    @AppStorage(AppSettingsKeys.menuBarShowsDifference) private var showsDifference = true
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         let displayState = glucoseMonitor.displayState
         Image(nsImage: renderStatusImage(for: displayState))
-            .accessibilityLabel(GlucoseStatusFormatter.accessibilityDescription(for: displayState, glucoseUnit: glucoseUnit))
+            .accessibilityLabel(
+                GlucoseStatusFormatter.accessibilityDescription(
+                    for: displayState,
+                    glucoseUnit: glucoseUnit,
+                    showsDifference: showsDifference
+                ))
     }
 
     private func renderStatusImage(for displayState: GlucoseDisplayState) -> NSImage {
+        let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
+            for: displayState,
+            glucoseUnit: glucoseUnit,
+            currentDate: glucoseMonitor.displayEvaluationDate,
+            showsDifference: showsDifference
+        )
         let statusView = MenuBarStatusView(
-            statusContent: GlucoseStatusFormatter.menuBarStatusContent(
-                for: displayState,
-                glucoseUnit: glucoseUnit,
-                currentDate: glucoseMonitor.displayEvaluationDate
+            statusContent: statusContent,
+            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(
+                for: glucoseUnit,
+                isDifferenceShown: statusContent.differenceContent != nil
             ),
-            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(for: glucoseUnit),
             textStyle: MenuBarTextStyle(fontSizePoints: fontSizePoints, fontWeight: fontWeight, fontDesign: fontDesign)
         )
         // Template images use only alpha, so draw in solid black and let the system tint it.
@@ -73,6 +84,8 @@ private struct MenuBarStatusRow: View {
     static let valueToArrowSpacing = 3.0
     /// Pulls repeated arrows together so a double arrow reads as one glyph.
     static let repeatedArrowSpacing = -3.0
+    /// Added to the usual spacing between the change and the age suffix, which are both numbers.
+    static let differenceToAgeExtraSpacing = 4.0
 
     let statusContent: GlucoseStatusFormatter.MenuBarStatusContent
     let textStyle: MenuBarTextStyle
@@ -81,6 +94,11 @@ private struct MenuBarStatusRow: View {
         HStack(spacing: textStyle.scaledSpacing(Self.valueToArrowSpacing)) {
             Text(statusContent.valueText)
             trendArrowImages
+            if let differenceContent = statusContent.differenceContent {
+                MenuBarDifferenceView(differenceContent: differenceContent, textStyle: textStyle)
+                    // Keeps `+4 8m` from reading as `+48m`.
+                    .padding(.trailing, statusContent.ageSuffixText == nil ? 0 : textStyle.scaledSpacing(Self.differenceToAgeExtraSpacing))
+            }
             if let ageSuffixText = statusContent.ageSuffixText {
                 Text(ageSuffixText)
             }
@@ -97,6 +115,23 @@ private struct MenuBarStatusRow: View {
                     .imageScale(.small)
                     .fontWeight(.bold)
             }
+        }
+    }
+}
+
+/// The change since the previous reading, e.g. `⊕4`: an SF Symbol sign tucked against the amount.
+private struct MenuBarDifferenceView: View {
+    /// Spacing tuned at the default font size; scaled for other sizes.
+    static let signToMagnitudeSpacing = 1.0
+
+    let differenceContent: GlucoseStatusFormatter.DifferenceContent
+    let textStyle: MenuBarTextStyle
+
+    var body: some View {
+        HStack(spacing: textStyle.scaledSpacing(Self.signToMagnitudeSpacing)) {
+            Image(systemName: differenceContent.signSymbolName)
+                .imageScale(.small)
+            Text(differenceContent.magnitudeText)
         }
     }
 }

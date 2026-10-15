@@ -16,6 +16,8 @@ struct SettingsView: View {
     @AppStorage(AppSettingsKeys.menuBarFontSizePoints) private var menuBarFontSizePoints = MenuBarTextStyle.defaultFontSizePoints
     @AppStorage(AppSettingsKeys.menuBarFontWeight) private var menuBarFontWeight = MenuBarTextStyle.defaultFontWeight
     @AppStorage(AppSettingsKeys.menuBarFontDesign) private var menuBarFontDesign = MenuBarTextStyle.defaultFontDesign
+    @AppStorage(AppSettingsKeys.menuBarShowsDifference) private var menuBarShowsDifference = true
+    @AppStorage(AppSettingsKeys.dropdownMenuShowsDifference) private var dropdownMenuShowsDifference = true
 
     @State private var draftUsername = ""
     @State private var draftPassword = ""
@@ -89,6 +91,8 @@ struct SettingsView: View {
                     Text(unit.unitLabel).tag(unit)
                 }
             }
+            Toggle("Show change in menu bar", isOn: $menuBarShowsDifference)
+            Toggle("Show change in dropdown menu", isOn: $dropdownMenuShowsDifference)
             Picker("Font", selection: $menuBarFontDesign) {
                 ForEach(MenuBarFontDesign.allCases) { fontDesign in
                     Text(fontDesign.displayName).tag(fontDesign)
@@ -109,8 +113,8 @@ struct SettingsView: View {
             }
             LabeledContent("Preview") {
                 HStack(spacing: 8) {
-                    menuBarPreview(for: .current(Self.previewReading))
-                    menuBarPreview(for: .aging(Self.previewReading))
+                    menuBarPreview(for: .current(Self.previewReadings))
+                    menuBarPreview(for: .aging(Self.previewReadings))
                     Button("Reset") {
                         resetMenuBarTextStyle()
                     }
@@ -129,6 +133,15 @@ struct SettingsView: View {
         readingTimestamp: Date.distantPast
     )
     private static let previewAgeSeconds: TimeInterval = 8 * 60
+    /// Rising by 4 since the reading before, so the preview includes the change.
+    private static let previewReadings = DisplayedReadings(
+        currentReading: previewReading,
+        previousReading: GlucoseReading(
+            valueMgPerDeciliter: previewReading.valueMgPerDeciliter - 4,
+            trendDirection: .flat,
+            readingTimestamp: previewReading.readingTimestamp.addingTimeInterval(-GlucoseFetchScheduler.sensorReadingInterval)
+        )
+    )
 
     private var menuBarTextStyle: MenuBarTextStyle {
         MenuBarTextStyle(fontSizePoints: menuBarFontSizePoints, fontWeight: menuBarFontWeight, fontDesign: menuBarFontDesign)
@@ -139,9 +152,13 @@ struct SettingsView: View {
             statusContent: GlucoseStatusFormatter.menuBarStatusContent(
                 for: previewState,
                 glucoseUnit: glucoseUnit,
-                currentDate: Self.previewReading.readingTimestamp.addingTimeInterval(Self.previewAgeSeconds)
+                currentDate: Self.previewReading.readingTimestamp.addingTimeInterval(Self.previewAgeSeconds),
+                showsDifference: menuBarShowsDifference
             ),
-            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(for: glucoseUnit),
+            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(
+                for: glucoseUnit,
+                isDifferenceShown: menuBarShowsDifference
+            ),
             textStyle: menuBarTextStyle
         )
         .padding(.horizontal, 8)

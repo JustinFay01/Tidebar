@@ -40,7 +40,12 @@ struct DebugSimulationTests {
     }
 
     @Test func liveDataHasNoSimulatedOutcome() {
-        #expect(DebugSimulationScenario.liveData.simulatedOutcome(at: testClock.currentDate) == nil)
+        #expect(
+            DebugSimulationScenario.liveData.simulatedOutcome(
+                at: testClock.currentDate,
+                fetchIndex: 0,
+                firstFetchDate: testClock.currentDate
+            ) == nil)
     }
 
     @Test(arguments: [
@@ -64,6 +69,8 @@ struct DebugSimulationTests {
             (DebugSimulationScenario.currentReading, ExpectedDisplayKind.current, TrendDirection.flat),
             (.agingReading, .aging, .flat),
             (.staleReading, .unknown, .flat),
+            (.singleUpTrend, .current, .singleUp),
+            (.singleDownTrend, .current, .singleDown),
             (.doubleUpTrend, .current, .doubleUp),
             (.doubleDownTrend, .current, .doubleDown),
             (.indeterminateTrend, .current, .notComputable),
@@ -77,12 +84,75 @@ struct DebugSimulationTests {
 
         _ = await monitor.performFetch()
 
-        #expect(monitor.latestReading?.trendDirection == expectedTrendDirection)
+        #expect(monitor.currentReading?.trendDirection == expectedTrendDirection)
         switch (monitor.displayState, expectedDisplayKind) {
         case (.current, .current), (.aging, .aging), (.unknown, .unknown):
             break
         default:
             Issue.record("Expected \(expectedDisplayKind) but got \(monitor.displayState)")
+        }
+    }
+
+    @Test(
+        arguments: [
+            (DebugSimulationScenario.currentReading, 0),
+            (.singleUpTrend, 8),
+            (.singleDownTrend, -8),
+            (.doubleUpTrend, 18),
+            (.doubleDownTrend, -18),
+            (.indeterminateTrend, 0),
+        ] as [(DebugSimulationScenario, Int)])
+    func readingScenariosShowTheirChangeFromTheSecondFetchOn(
+        simulationScenario: DebugSimulationScenario,
+        expectedDifferenceMgPerDeciliter: Int
+    ) async {
+        let monitor = makeMonitor(simulating: simulationScenario)
+
+        let delayAfterEarlierReading = await monitor.performFetch()
+        #expect(delayAfterEarlierReading == GlucoseFetchScheduler.readingPublicationGracePeriod)
+        #expect(differenceShown(by: monitor) == nil)
+
+        testClock.advance(bySeconds: 15)
+        _ = await monitor.performFetch()
+        #expect(monitor.currentReading?.valueMgPerDeciliter == DebugSimulationScenario.simulatedValueMgPerDeciliter)
+        #expect(differenceShown(by: monitor) == expectedDifferenceMgPerDeciliter)
+
+        testClock.advance(bySeconds: GlucoseFetchScheduler.sensorReadingInterval)
+        _ = await monitor.performFetch()
+        #expect(differenceShown(by: monitor) == expectedDifferenceMgPerDeciliter)
+    }
+
+    @Test(arguments: [DebugSimulationScenario.agingReading, .staleReading])
+    func agedReadingScenariosKeepOneReadingAcrossRefreshes(simulationScenario: DebugSimulationScenario) async {
+        let monitor = makeMonitor(simulating: simulationScenario)
+
+        _ = await monitor.performFetch()
+        let firstReading = monitor.currentReading
+        testClock.advance(bySeconds: GlucoseFetchScheduler.awaitingNewReadingRetryInterval)
+        _ = await monitor.performFetch()
+
+        #expect(monitor.currentReading == firstReading)
+        #expect(monitor.previousReading == nil)
+    }
+
+    @Test(arguments: [DebugSimulationScenario.doubleUpTrend, .doubleDownTrend])
+    func driftingReadingsStayWithinDexcomRange(simulationScenario: DebugSimulationScenario) throws {
+        let simulatedOutcome = simulationScenario.simulatedOutcome(
+            at: testClock.currentDate,
+            fetchIndex: 1_000,
+            firstFetchDate: testClock.currentDate
+        )
+        let simulatedReading = try #require(simulatedOutcome).get()
+
+        #expect(DebugSimulationScenario.simulatedValueRangeMgPerDeciliter.contains(simulatedReading.valueMgPerDeciliter))
+    }
+
+    private func differenceShown(by monitor: GlucoseMonitor) -> Int? {
+        switch monitor.displayState {
+        case .current(let readings), .aging(let readings):
+            DisplayedReadings.differenceMgPerDeciliter(from: readings.previousReading, to: readings.currentReading)
+        case .unknown:
+            nil
         }
     }
 
@@ -124,7 +194,7 @@ struct DebugSimulationTests {
 
         #expect(debugSimulationController.activeScenario == .liveData)
         #expect(monitor.providerSetupError == nil)
-        #expect(monitor.latestReading != nil)
+        #expect(monitor.currentReading != nil)
     }
 }
 #endif
