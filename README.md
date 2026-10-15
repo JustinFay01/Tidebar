@@ -27,6 +27,7 @@
 ## Features
 
 - Current glucose and trend arrow in the menu bar. Values 6–12 minutes old are dimmed and show their age (`112 → 8m`).
+  Dimming can be turned off in Settings.
 - The change since the previous reading, in the menu bar (`112 → +4`) and the menu. It's shown only when the two
   readings are consecutive, so a gap in sensor data never shows a misleading change. Either place can be turned
   off in Settings.

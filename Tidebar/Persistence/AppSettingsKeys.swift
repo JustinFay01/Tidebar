@@ -16,4 +16,5 @@ nonisolated enum AppSettingsKeys {
     static let menuBarFontDesign = "menuBarFontDesign"
     static let menuBarShowsDifference = "menuBarShowsDifference"
     static let dropdownMenuShowsDifference = "dropdownMenuShowsDifference"
+    static let menuBarDimsAgingReadings = "menuBarDimsAgingReadings"
 }
