@@ -222,6 +222,7 @@ struct GlucoseStatusFormatterTests {
                 )),
             glucoseUnit: .milligramsPerDeciliter,
             currentDate: referenceDate,
+            showsDifference: true,
             locale: Self.englishLocale
         )
         #expect(
@@ -280,6 +281,7 @@ struct GlucoseStatusFormatterTests {
             for: .current(readings),
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
+            showsDifference: true,
             locale: Locale(identifier: localeIdentifier)
         )
 
@@ -311,10 +313,35 @@ struct GlucoseStatusFormatterTests {
         let accessibilityDescription = GlucoseStatusFormatter.accessibilityDescription(
             for: .current(readings),
             glucoseUnit: .milligramsPerDeciliter,
+            showsDifference: true,
             locale: Self.englishLocale
         )
 
         #expect(accessibilityDescription == expectedDescription)
+    }
+
+    @Test func leavesOutTheDifferenceWhenTurnedOffForTheMenuBar() {
+        let readings = DisplayedReadings(
+            currentReading: makeReading(secondsBeforeReference: 60),
+            previousReading: makeReading(secondsBeforeReference: 360, valueMgPerDeciliter: 104)
+        )
+
+        let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
+            for: .current(readings),
+            glucoseUnit: .milligramsPerDeciliter,
+            currentDate: referenceDate,
+            showsDifference: false,
+            locale: Self.englishLocale
+        )
+        let accessibilityDescription = GlucoseStatusFormatter.accessibilityDescription(
+            for: .current(readings),
+            glucoseUnit: .milligramsPerDeciliter,
+            showsDifference: false,
+            locale: Self.englishLocale
+        )
+
+        #expect(statusContent.differenceContent == nil)
+        #expect(accessibilityDescription == "Glucose 112 mg/dL, Steady")
     }
 
     @Test(arguments: [
@@ -360,6 +387,7 @@ struct GlucoseStatusFormatterTests {
             for: .aging(DisplayedReadings(currentReading: makeReading(secondsBeforeReference: 510), previousReading: nil)),
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
+            showsDifference: true,
             locale: Locale(identifier: localeIdentifier)
         )
         #expect(
@@ -378,7 +406,8 @@ struct GlucoseStatusFormatterTests {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
             for: .unknown(reason: "anything"),
             glucoseUnit: glucoseUnit,
-            currentDate: referenceDate
+            currentDate: referenceDate,
+            showsDifference: true
         )
         #expect(statusContent.valueText == "---")
         #expect(statusContent.trendSymbolNames == ["questionmark"])

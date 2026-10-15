@@ -19,19 +19,26 @@ struct MenuBarLabelView: View {
     @AppStorage(AppSettingsKeys.menuBarFontSizePoints) private var fontSizePoints = MenuBarTextStyle.defaultFontSizePoints
     @AppStorage(AppSettingsKeys.menuBarFontWeight) private var fontWeight = MenuBarTextStyle.defaultFontWeight
     @AppStorage(AppSettingsKeys.menuBarFontDesign) private var fontDesign = MenuBarTextStyle.defaultFontDesign
+    @AppStorage(AppSettingsKeys.menuBarShowsDifference) private var showsDifference = true
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         let displayState = glucoseMonitor.displayState
         Image(nsImage: renderStatusImage(for: displayState))
-            .accessibilityLabel(GlucoseStatusFormatter.accessibilityDescription(for: displayState, glucoseUnit: glucoseUnit))
+            .accessibilityLabel(
+                GlucoseStatusFormatter.accessibilityDescription(
+                    for: displayState,
+                    glucoseUnit: glucoseUnit,
+                    showsDifference: showsDifference
+                ))
     }
 
     private func renderStatusImage(for displayState: GlucoseDisplayState) -> NSImage {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
             for: displayState,
             glucoseUnit: glucoseUnit,
-            currentDate: glucoseMonitor.displayEvaluationDate
+            currentDate: glucoseMonitor.displayEvaluationDate,
+            showsDifference: showsDifference
         )
         let statusView = MenuBarStatusView(
             statusContent: statusContent,

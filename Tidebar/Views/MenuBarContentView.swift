@@ -15,6 +15,7 @@ struct MenuBarContentView: View {
     #endif
 
     @AppStorage(AppSettingsKeys.glucoseUnit) private var glucoseUnit = GlucoseUnit.milligramsPerDeciliter
+    @AppStorage(AppSettingsKeys.dropdownMenuShowsDifference) private var showsDifference = true
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -69,7 +70,8 @@ struct MenuBarContentView: View {
         let trendSymbol = GlucoseStatusFormatter.trendSymbol(for: latestReading.trendDirection)
         let summaryText = "\(formattedValue) \(glucoseUnit.unitLabel) \(trendSymbol)  \(latestReading.trendDirection.trendDescription)"
         let readings = DisplayedReadings(currentReading: latestReading, previousReading: glucoseMonitor.previousReading)
-        guard let differenceText = GlucoseStatusFormatter.differencePlainText(for: readings, glucoseUnit: glucoseUnit) else {
+        guard showsDifference, let differenceText = GlucoseStatusFormatter.differencePlainText(for: readings, glucoseUnit: glucoseUnit)
+        else {
             return summaryText
         }
         return "\(summaryText)  \(differenceText)"

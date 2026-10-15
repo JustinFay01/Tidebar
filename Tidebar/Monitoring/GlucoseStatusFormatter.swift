@@ -28,10 +28,12 @@ nonisolated enum GlucoseStatusFormatter {
 
     /// `112 → ⊕4` when current, `112 → ⊕4 8m` dimmed when aging, `--- ?` when unknown.
     /// The change is left out until there is a previous reading to compare against.
+    /// - Parameter showsDifference: the user's setting for showing the change in the menu bar.
     static func menuBarStatusContent(
         for displayState: GlucoseDisplayState,
         glucoseUnit: GlucoseUnit,
         currentDate: Date,
+        showsDifference: Bool,
         locale: Locale = .autoupdatingCurrent
     ) -> MenuBarStatusContent {
         switch displayState {
@@ -47,7 +49,7 @@ nonisolated enum GlucoseStatusFormatter {
             return MenuBarStatusContent(
                 valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: readings.currentReading.valueMgPerDeciliter, locale: locale),
                 trendSymbolNames: trendSymbolNames(for: readings.currentReading.trendDirection),
-                differenceContent: differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale),
+                differenceContent: showsDifference ? differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale) : nil,
                 ageSuffixText: nil,
                 isDimmed: false
             )
@@ -55,7 +57,7 @@ nonisolated enum GlucoseStatusFormatter {
             return MenuBarStatusContent(
                 valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: readings.currentReading.valueMgPerDeciliter, locale: locale),
                 trendSymbolNames: trendSymbolNames(for: readings.currentReading.trendDirection),
-                differenceContent: differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale),
+                differenceContent: showsDifference ? differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale) : nil,
                 ageSuffixText: compactAge(of: readings.currentReading, currentDate: currentDate),
                 isDimmed: true
             )
@@ -202,9 +204,11 @@ nonisolated enum GlucoseStatusFormatter {
     }
 
     /// Spoken description for VoiceOver, e.g. "112 milligrams per deciliter, steady, up 4 since the last reading".
+    /// - Parameter showsDifference: whether the menu bar shows the change, so VoiceOver speaks only what is shown.
     static func accessibilityDescription(
         for displayState: GlucoseDisplayState,
         glucoseUnit: GlucoseUnit,
+        showsDifference: Bool,
         locale: Locale = .autoupdatingCurrent
     ) -> String {
         switch displayState {
@@ -214,7 +218,7 @@ nonisolated enum GlucoseStatusFormatter {
             let glucoseReading = readings.currentReading
             let formattedValue = glucoseUnit.formattedValue(fromMgPerDeciliter: glucoseReading.valueMgPerDeciliter, locale: locale)
             let description = "Glucose \(formattedValue) \(glucoseUnit.unitLabel), \(glucoseReading.trendDirection.trendDescription)"
-            guard let spokenDifference = spokenDifference(for: readings, glucoseUnit: glucoseUnit, locale: locale) else {
+            guard showsDifference, let spokenDifference = spokenDifference(for: readings, glucoseUnit: glucoseUnit, locale: locale) else {
                 return description
             }
             return "\(description), \(spokenDifference)"

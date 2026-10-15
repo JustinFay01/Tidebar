@@ -14,4 +14,6 @@ nonisolated enum AppSettingsKeys {
     static let menuBarFontSizePoints = "menuBarFontSizePoints"
     static let menuBarFontWeight = "menuBarFontWeight"
     static let menuBarFontDesign = "menuBarFontDesign"
+    static let menuBarShowsDifference = "menuBarShowsDifference"
+    static let dropdownMenuShowsDifference = "dropdownMenuShowsDifference"
 }

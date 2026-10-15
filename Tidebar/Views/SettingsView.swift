@@ -16,6 +16,8 @@ struct SettingsView: View {
     @AppStorage(AppSettingsKeys.menuBarFontSizePoints) private var menuBarFontSizePoints = MenuBarTextStyle.defaultFontSizePoints
     @AppStorage(AppSettingsKeys.menuBarFontWeight) private var menuBarFontWeight = MenuBarTextStyle.defaultFontWeight
     @AppStorage(AppSettingsKeys.menuBarFontDesign) private var menuBarFontDesign = MenuBarTextStyle.defaultFontDesign
+    @AppStorage(AppSettingsKeys.menuBarShowsDifference) private var menuBarShowsDifference = true
+    @AppStorage(AppSettingsKeys.dropdownMenuShowsDifference) private var dropdownMenuShowsDifference = true
 
     @State private var draftUsername = ""
     @State private var draftPassword = ""
@@ -89,6 +91,8 @@ struct SettingsView: View {
                     Text(unit.unitLabel).tag(unit)
                 }
             }
+            Toggle("Show change in menu bar", isOn: $menuBarShowsDifference)
+            Toggle("Show change in dropdown menu", isOn: $dropdownMenuShowsDifference)
             Picker("Font", selection: $menuBarFontDesign) {
                 ForEach(MenuBarFontDesign.allCases) { fontDesign in
                     Text(fontDesign.displayName).tag(fontDesign)
@@ -148,11 +152,12 @@ struct SettingsView: View {
             statusContent: GlucoseStatusFormatter.menuBarStatusContent(
                 for: previewState,
                 glucoseUnit: glucoseUnit,
-                currentDate: Self.previewReading.readingTimestamp.addingTimeInterval(Self.previewAgeSeconds)
+                currentDate: Self.previewReading.readingTimestamp.addingTimeInterval(Self.previewAgeSeconds),
+                showsDifference: menuBarShowsDifference
             ),
             widthReservingContents: GlucoseStatusFormatter.widthReservingContents(
                 for: glucoseUnit,
-                isDifferenceShown: true
+                isDifferenceShown: menuBarShowsDifference
             ),
             textStyle: menuBarTextStyle
         )
