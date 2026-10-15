@@ -20,6 +20,7 @@ struct MenuBarLabelView: View {
     @AppStorage(AppSettingsKeys.menuBarFontWeight) private var fontWeight = MenuBarTextStyle.defaultFontWeight
     @AppStorage(AppSettingsKeys.menuBarFontDesign) private var fontDesign = MenuBarTextStyle.defaultFontDesign
     @AppStorage(AppSettingsKeys.menuBarShowsDifference) private var showsDifference = true
+    @AppStorage(AppSettingsKeys.menuBarDimsAgingReadings) private var dimsAgingReadings = true
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
@@ -38,7 +39,8 @@ struct MenuBarLabelView: View {
             for: displayState,
             glucoseUnit: glucoseUnit,
             currentDate: glucoseMonitor.displayEvaluationDate,
-            showsDifference: showsDifference
+            showsDifference: showsDifference,
+            dimsAgingReadings: dimsAgingReadings
         )
         let statusView = MenuBarStatusView(
             statusContent: statusContent,

@@ -29,11 +29,13 @@ nonisolated enum GlucoseStatusFormatter {
     /// `112 → ⊕4` when current, `112 → ⊕4 8m` dimmed when aging, `--- ?` when unknown.
     /// The change is left out until there is a previous reading to compare against.
     /// - Parameter showsDifference: the user's setting for showing the change in the menu bar.
+    /// - Parameter dimsAgingReadings: the user's setting for dimming aging readings; the age suffix shows either way.
     static func menuBarStatusContent(
         for displayState: GlucoseDisplayState,
         glucoseUnit: GlucoseUnit,
         currentDate: Date,
         showsDifference: Bool,
+        dimsAgingReadings: Bool,
         locale: Locale = .autoupdatingCurrent
     ) -> MenuBarStatusContent {
         switch displayState {
@@ -59,7 +61,7 @@ nonisolated enum GlucoseStatusFormatter {
                 trendSymbolNames: trendSymbolNames(for: readings.currentReading.trendDirection),
                 differenceContent: showsDifference ? differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale) : nil,
                 ageSuffixText: compactAge(of: readings.currentReading, currentDate: currentDate),
-                isDimmed: true
+                isDimmed: dimsAgingReadings
             )
         }
     }

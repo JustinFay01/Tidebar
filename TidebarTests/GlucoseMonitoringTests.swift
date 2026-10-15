@@ -223,6 +223,7 @@ struct GlucoseStatusFormatterTests {
             glucoseUnit: .milligramsPerDeciliter,
             currentDate: referenceDate,
             showsDifference: true,
+            dimsAgingReadings: true,
             locale: Self.englishLocale
         )
         #expect(
@@ -282,6 +283,7 @@ struct GlucoseStatusFormatterTests {
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
             showsDifference: true,
+            dimsAgingReadings: true,
             locale: Locale(identifier: localeIdentifier)
         )
 
@@ -331,6 +333,7 @@ struct GlucoseStatusFormatterTests {
             glucoseUnit: .milligramsPerDeciliter,
             currentDate: referenceDate,
             showsDifference: false,
+            dimsAgingReadings: true,
             locale: Self.englishLocale
         )
         let accessibilityDescription = GlucoseStatusFormatter.accessibilityDescription(
@@ -388,6 +391,7 @@ struct GlucoseStatusFormatterTests {
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
             showsDifference: true,
+            dimsAgingReadings: true,
             locale: Locale(identifier: localeIdentifier)
         )
         #expect(
@@ -401,13 +405,28 @@ struct GlucoseStatusFormatterTests {
                 ))
     }
 
+    @Test func keepsTheAgeSuffixButNotTheDimmingWhenDimmingIsTurnedOff() {
+        let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
+            for: .aging(DisplayedReadings(currentReading: makeReading(secondsBeforeReference: 510), previousReading: nil)),
+            glucoseUnit: .milligramsPerDeciliter,
+            currentDate: referenceDate,
+            showsDifference: true,
+            dimsAgingReadings: false,
+            locale: Self.englishLocale
+        )
+
+        #expect(statusContent.ageSuffixText == "8m")
+        #expect(!statusContent.isDimmed)
+    }
+
     @Test(arguments: GlucoseUnit.allCases)
     func formatsUnknownState(glucoseUnit: GlucoseUnit) {
         let statusContent = GlucoseStatusFormatter.menuBarStatusContent(
             for: .unknown(reason: "anything"),
             glucoseUnit: glucoseUnit,
             currentDate: referenceDate,
-            showsDifference: true
+            showsDifference: true,
+            dimsAgingReadings: true
         )
         #expect(statusContent.valueText == "---")
         #expect(statusContent.trendSymbolNames == ["questionmark"])
