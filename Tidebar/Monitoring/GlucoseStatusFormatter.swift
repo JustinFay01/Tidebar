@@ -15,11 +15,19 @@ nonisolated enum GlucoseStatusFormatter {
     struct MenuBarStatusContent: Equatable, Sendable {
         let valueText: String
         let trendSymbolNames: [String]
+        let differenceContent: DifferenceContent?
         let ageSuffixText: String?
         let isDimmed: Bool
     }
 
-    /// `112 →` when current, `112 → 8m` dimmed when aging, `--- ?` when unknown.
+    /// The change since the previous reading: the sign drawn as an SF Symbol, then the unsigned amount.
+    struct DifferenceContent: Equatable, Sendable {
+        let signSymbolName: String
+        let magnitudeText: String
+    }
+
+    /// `112 → ⊕4` when current, `112 → ⊕4 8m` dimmed when aging, `--- ?` when unknown.
+    /// The change is left out until there is a previous reading to compare against.
     static func menuBarStatusContent(
         for displayState: GlucoseDisplayState,
         glucoseUnit: GlucoseUnit,
@@ -31,24 +39,90 @@ nonisolated enum GlucoseStatusFormatter {
             return MenuBarStatusContent(
                 valueText: unknownValueText,
                 trendSymbolNames: [indeterminateTrendSymbolName],
+                differenceContent: nil,
                 ageSuffixText: nil,
                 isDimmed: false
             )
-        case .current(let glucoseReading):
+        case .current(let readings):
             return MenuBarStatusContent(
-                valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: glucoseReading.valueMgPerDeciliter, locale: locale),
-                trendSymbolNames: trendSymbolNames(for: glucoseReading.trendDirection),
+                valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: readings.currentReading.valueMgPerDeciliter, locale: locale),
+                trendSymbolNames: trendSymbolNames(for: readings.currentReading.trendDirection),
+                differenceContent: differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale),
                 ageSuffixText: nil,
                 isDimmed: false
             )
-        case .aging(let glucoseReading):
+        case .aging(let readings):
             return MenuBarStatusContent(
-                valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: glucoseReading.valueMgPerDeciliter, locale: locale),
-                trendSymbolNames: trendSymbolNames(for: glucoseReading.trendDirection),
-                ageSuffixText: compactAge(of: glucoseReading, currentDate: currentDate),
+                valueText: glucoseUnit.formattedValue(fromMgPerDeciliter: readings.currentReading.valueMgPerDeciliter, locale: locale),
+                trendSymbolNames: trendSymbolNames(for: readings.currentReading.trendDirection),
+                differenceContent: differenceContent(for: readings, glucoseUnit: glucoseUnit, locale: locale),
+                ageSuffixText: compactAge(of: readings.currentReading, currentDate: currentDate),
                 isDimmed: true
             )
         }
+    }
+
+    /// `nil` when there is no previous reading to compare against.
+    static func differenceContent(
+        for readings: DisplayedReadings,
+        glucoseUnit: GlucoseUnit,
+        locale: Locale = .autoupdatingCurrent
+    ) -> DifferenceContent? {
+        guard let differenceMgPerDeciliter = readings.differenceMgPerDeciliter else {
+            return nil
+        }
+        return DifferenceContent(
+            signSymbolName: differenceSignSymbolName(for: differenceMgPerDeciliter),
+            magnitudeText: glucoseUnit.formattedValue(fromMgPerDeciliter: abs(differenceMgPerDeciliter), locale: locale)
+        )
+    }
+
+    static func differenceSignSymbolName(for differenceMgPerDeciliter: Int) -> String {
+        if differenceMgPerDeciliter > 0 {
+            return "plus"
+        }
+        if differenceMgPerDeciliter < 0 {
+            return "minus"
+        }
+        return "plusminus"
+    }
+
+    /// e.g. `+4`, `−0.3`, `±0` for plain-text contexts such as the dropdown menu, which draws SF Symbols
+    /// in a fixed color instead of its own text color. `nil` when there is no previous reading to compare against.
+    static func differencePlainText(
+        for readings: DisplayedReadings,
+        glucoseUnit: GlucoseUnit,
+        locale: Locale = .autoupdatingCurrent
+    ) -> String? {
+        guard let differenceMgPerDeciliter = readings.differenceMgPerDeciliter else {
+            return nil
+        }
+        let magnitudeText = glucoseUnit.formattedValue(fromMgPerDeciliter: abs(differenceMgPerDeciliter), locale: locale)
+        return "\(differenceSignCharacter(for: differenceMgPerDeciliter))\(magnitudeText)"
+    }
+
+    /// The plain-text counterpart of `differenceSignSymbolName(for:)`, using the true minus sign.
+    static func differenceSignCharacter(for differenceMgPerDeciliter: Int) -> String {
+        if differenceMgPerDeciliter > 0 {
+            return "+"
+        }
+        if differenceMgPerDeciliter < 0 {
+            return "\u{2212}"
+        }
+        return "\u{00B1}"
+    }
+
+    /// e.g. `up 4 since the last reading`, or `nil` when there is no previous reading to compare against.
+    static func spokenDifference(for readings: DisplayedReadings, glucoseUnit: GlucoseUnit, locale: Locale) -> String? {
+        guard let differenceMgPerDeciliter = readings.differenceMgPerDeciliter else {
+            return nil
+        }
+        guard differenceMgPerDeciliter != 0 else {
+            return "no change since the last reading"
+        }
+        let direction = differenceMgPerDeciliter > 0 ? "up" : "down"
+        let magnitudeText = glucoseUnit.formattedValue(fromMgPerDeciliter: abs(differenceMgPerDeciliter), locale: locale)
+        return "\(direction) \(magnitudeText) since the last reading"
     }
 
     /// SF Symbol names for the trend. There is no double-arrow symbol before macOS 15,
@@ -69,15 +143,24 @@ nonisolated enum GlucoseStatusFormatter {
     /// Typical content laid out invisibly behind the real content to keep the menu bar width stable:
     /// the widest value with each single-arrow symbol, since symbol widths vary by font.
     /// Double arrows are rare and deliberately not reserved, so normal readings carry no extra padding.
-    static func widthReservingContents(for glucoseUnit: GlucoseUnit) -> [MenuBarStatusContent] {
+    /// - Parameter isDifferenceShown: also reserves the widest typical change, so the width holds as it changes.
+    static func widthReservingContents(for glucoseUnit: GlucoseUnit, isDifferenceShown: Bool) -> [MenuBarStatusContent] {
         singleTrendSymbolNames.map { trendSymbolName in
             MenuBarStatusContent(
                 valueText: glucoseUnit.widestTypicalValuePlaceholder,
                 trendSymbolNames: [trendSymbolName],
+                differenceContent: isDifferenceShown ? widestTypicalDifferenceContent(for: glucoseUnit) : nil,
                 ageSuffixText: nil,
                 isDimmed: false
             )
         }
+    }
+
+    private static func widestTypicalDifferenceContent(for glucoseUnit: GlucoseUnit) -> DifferenceContent {
+        DifferenceContent(
+            signSymbolName: differenceSignSymbolName(for: 1),
+            magnitudeText: glucoseUnit.widestTypicalDifferencePlaceholder
+        )
     }
 
     /// Every distinct symbol shown alone, i.e. all trends except the doubled arrows.
@@ -118,7 +201,7 @@ nonisolated enum GlucoseStatusFormatter {
             : "\(readingAgeHours) hr \(remainingMinutes) min ago"
     }
 
-    /// Spoken description for VoiceOver, e.g. "112 milligrams per deciliter, steady".
+    /// Spoken description for VoiceOver, e.g. "112 milligrams per deciliter, steady, up 4 since the last reading".
     static func accessibilityDescription(
         for displayState: GlucoseDisplayState,
         glucoseUnit: GlucoseUnit,
@@ -127,9 +210,14 @@ nonisolated enum GlucoseStatusFormatter {
         switch displayState {
         case .unknown(let reason):
             return "Glucose unknown. \(reason)"
-        case .current(let glucoseReading), .aging(let glucoseReading):
+        case .current(let readings), .aging(let readings):
+            let glucoseReading = readings.currentReading
             let formattedValue = glucoseUnit.formattedValue(fromMgPerDeciliter: glucoseReading.valueMgPerDeciliter, locale: locale)
-            return "Glucose \(formattedValue) \(glucoseUnit.unitLabel), \(glucoseReading.trendDirection.trendDescription)"
+            let description = "Glucose \(formattedValue) \(glucoseUnit.unitLabel), \(glucoseReading.trendDirection.trendDescription)"
+            guard let spokenDifference = spokenDifference(for: readings, glucoseUnit: glucoseUnit, locale: locale) else {
+                return description
+            }
+            return "\(description), \(spokenDifference)"
         }
     }
 

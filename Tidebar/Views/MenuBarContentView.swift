@@ -60,17 +60,23 @@ struct MenuBarContentView: View {
         .keyboardShortcut("q")
     }
 
+    /// e.g. `112 mg/dL →  Steady  +4`, with the change left out until there is a previous reading.
     private var readingSummaryText: String {
-        guard let latestReading = glucoseMonitor.latestReading else {
+        guard let latestReading = glucoseMonitor.currentReading else {
             return "No reading yet"
         }
         let formattedValue = glucoseUnit.formattedValue(fromMgPerDeciliter: latestReading.valueMgPerDeciliter)
         let trendSymbol = GlucoseStatusFormatter.trendSymbol(for: latestReading.trendDirection)
-        return "\(formattedValue) \(glucoseUnit.unitLabel) \(trendSymbol)  \(latestReading.trendDirection.trendDescription)"
+        let summaryText = "\(formattedValue) \(glucoseUnit.unitLabel) \(trendSymbol)  \(latestReading.trendDirection.trendDescription)"
+        let readings = DisplayedReadings(currentReading: latestReading, previousReading: glucoseMonitor.previousReading)
+        guard let differenceText = GlucoseStatusFormatter.differencePlainText(for: readings, glucoseUnit: glucoseUnit) else {
+            return summaryText
+        }
+        return "\(summaryText)  \(differenceText)"
     }
 
     private var lastReadingText: String {
-        guard let latestReading = glucoseMonitor.latestReading else {
+        guard let latestReading = glucoseMonitor.currentReading else {
             return "Last reading: none"
         }
         let relativeAge = GlucoseStatusFormatter.relativeAgeDescription(

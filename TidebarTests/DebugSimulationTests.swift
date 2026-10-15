@@ -77,7 +77,7 @@ struct DebugSimulationTests {
 
         _ = await monitor.performFetch()
 
-        #expect(monitor.latestReading?.trendDirection == expectedTrendDirection)
+        #expect(monitor.currentReading?.trendDirection == expectedTrendDirection)
         switch (monitor.displayState, expectedDisplayKind) {
         case (.current, .current), (.aging, .aging), (.unknown, .unknown):
             break
@@ -124,7 +124,7 @@ struct DebugSimulationTests {
 
         #expect(debugSimulationController.activeScenario == .liveData)
         #expect(monitor.providerSetupError == nil)
-        #expect(monitor.latestReading != nil)
+        #expect(monitor.currentReading != nil)
     }
 }
 #endif

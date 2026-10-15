@@ -109,8 +109,8 @@ struct SettingsView: View {
             }
             LabeledContent("Preview") {
                 HStack(spacing: 8) {
-                    menuBarPreview(for: .current(Self.previewReading))
-                    menuBarPreview(for: .aging(Self.previewReading))
+                    menuBarPreview(for: .current(Self.previewReadings))
+                    menuBarPreview(for: .aging(Self.previewReadings))
                     Button("Reset") {
                         resetMenuBarTextStyle()
                     }
@@ -129,6 +129,15 @@ struct SettingsView: View {
         readingTimestamp: Date.distantPast
     )
     private static let previewAgeSeconds: TimeInterval = 8 * 60
+    /// Rising by 4 since the reading before, so the preview includes the change.
+    private static let previewReadings = DisplayedReadings(
+        currentReading: previewReading,
+        previousReading: GlucoseReading(
+            valueMgPerDeciliter: previewReading.valueMgPerDeciliter - 4,
+            trendDirection: .flat,
+            readingTimestamp: previewReading.readingTimestamp.addingTimeInterval(-GlucoseFetchScheduler.sensorReadingInterval)
+        )
+    )
 
     private var menuBarTextStyle: MenuBarTextStyle {
         MenuBarTextStyle(fontSizePoints: menuBarFontSizePoints, fontWeight: menuBarFontWeight, fontDesign: menuBarFontDesign)
@@ -141,7 +150,10 @@ struct SettingsView: View {
                 glucoseUnit: glucoseUnit,
                 currentDate: Self.previewReading.readingTimestamp.addingTimeInterval(Self.previewAgeSeconds)
             ),
-            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(for: glucoseUnit),
+            widthReservingContents: GlucoseStatusFormatter.widthReservingContents(
+                for: glucoseUnit,
+                isDifferenceShown: true
+            ),
             textStyle: menuBarTextStyle
         )
         .padding(.horizontal, 8)
