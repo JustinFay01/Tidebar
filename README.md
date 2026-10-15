@@ -5,7 +5,7 @@
 <h1 align="center">Tidebar</h1>
 
 <p align="center">
-  A lightweight macOS menu bar app that shows your current Dexcom glucose value and trend, e.g. <code>112 →</code>.
+  A lightweight macOS menu bar app that shows your current Dexcom glucose value, trend, and change since the last reading, e.g. <code>112 → +4</code>.
 </p>
 
 <p align="center">
@@ -27,6 +27,9 @@
 ## Features
 
 - Current glucose and trend arrow in the menu bar. Values 6–12 minutes old are dimmed and show their age (`112 → 8m`).
+- The change since the previous reading, in the menu bar (`112 → +4`) and the menu. It's shown only when the two
+  readings are consecutive, so a gap in sensor data never shows a misleading change. Either place can be turned
+  off in Settings.
 - `--- ?` when data is missing, stale (older than 12 minutes), or can't be fetched, so an old value is never shown as current.
 - mg/dL or mmol/L, formatted for your locale.
 - Configurable menu bar font, weight, and size.
@@ -200,8 +203,13 @@ scripts in [`release/`](release/). See [release/README.md](release/README.md) fo
 
 Debug builds add a **Debug** submenu to the dropdown that replaces the real provider with a simulated one.
 It can simulate each error (invalid credentials, network unavailable, no readings, account locked, server
-error) and reading states (current, aging, stale, rising or falling quickly, no trend) without contacting
-Dexcom. Choose **Live Data** to go back. The simulation code is compiled out of Release builds.
+error) and reading states (current, aging, stale, rising, falling, rising or falling quickly, no trend) without
+contacting Dexcom. Choose **Live Data** to go back. The simulation code is compiled out of Release builds.
+
+Reading scenarios first return the reading from five minutes earlier, so the change since the previous reading
+appears on the next fetch, about 15 seconds later. Choose **Refresh Now** to skip the wait. Each later fetch moves
+the value by the scenario's change again. Aging and stale scenarios have a single reading and show no change; the
+Settings preview shows how an aging reading looks with a change.
 
 ## License
 
